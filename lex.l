@@ -57,7 +57,7 @@ REAL            [0-9]+"."[0-9]+
 "-" {return MINUS;}
 "*" {return MULT;}
 "/" {return DIV;}
-"^" {return EXP;}
+"^" {return POW;}
 "%" {return REST;}
 "(" {return OP;}
 ")" {return CP;}
@@ -69,12 +69,12 @@ REAL            [0-9]+"."[0-9]+
 ";" {return SEMI;}
 "," {return COMMA;}
 
-{INTEGER} {return INTEGER;}
-{REAL} {return REAL;}
+{INTEGER} {yylval.dval = atof(yytext); return INTEGER;}
+{REAL} {yylval.dval = atof(yytext); return REAL;}
 {ID} {return ID;}
 
-
-[ \t\n] {} //ignore white spaces
+[\n] {return END_INPUT;}
+[ \t] {} //ignore white spaces
 . {printf("invalid Symbol: %s\n",yytext);}
 %%
 
