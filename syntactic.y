@@ -122,9 +122,9 @@ Expression:
             }
         }
     |Expression MULT Expression {$$ = $1 * $3;}
-    |Expression POW Expression { /*$$ = pow($1,$3);*/}
+    |Expression POW Expression {$$ = pow($1,$3);}
+    |Expression REST Expression {$$ = fmod($1,$3);}
     |OP Expression CP {$$ = $2;}
-    |Expression REST Expression { /*$$ = $1 % $3;*/}
 ;
     
 Factor: 

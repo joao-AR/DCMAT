@@ -12,7 +12,7 @@ $(PROGRAM): $(LEX)
 	$(FLEX) $(LEX)
 	$(BISON) -d $(SYNTATIC)
 	$(CC) -c *.c -I.
-	$(CC) *.o -o $(PROGRAM)
+	$(CC) *.o -o $(PROGRAM) -lm
 
 clean:
 	rm -f lex.yy.c
