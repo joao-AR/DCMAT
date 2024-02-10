@@ -39,6 +39,7 @@ REAL            [0-9]+"."[0-9]+
 "plot" {return PLOT;}
 "precision" {return PRECISION;}
 "quit" {return QUIT; }
+"rpn" {return RPN;}
 "reset" {return RESET;}
 "sen" {return SEN;}
 "set" {return SET;}
