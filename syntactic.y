@@ -4,6 +4,8 @@
 	#include <string.h>
     #include <math.h>
 
+    #include "settings.h"
+
     void print_about();
 	extern char* yytext;
 	extern int yyleng;
@@ -85,31 +87,101 @@
 %token  <dval> INTEGER
 %token  <dval> REAL
 %token  ID
-%token First_grau_func
 %token END_INPUT 
 %%
 
-first: About|Show_Settings|Reset_Settings|Set_H_View|Set_V_View|Set_Axis_On|Set_Axis_Off|Plot_last|Plot|Set_Erase_Plot|Calc_exp|Function|Matrix|Integrate|Sum| Rpn| Integral_steps| Show_matrix|Quit|Solve_determinant| Solve_linear_system|Attr_val_simb|Attr_val_matrix| Show_var| Show_all_var|Set_float_precision| END_INPUT {return 0;};
+first: About|Show_Settings|Reset_Settings|Set_View|Set_Axis|Plot_last|Plot|Set_Erase_Plot|Calc_exp|Function|Matrix|Integrate|Sum| Rpn| Set_integral_steps| Show_matrix|Quit|Solve_determinant| Solve_linear_system|Attr_val_simb|Attr_val_matrix| Show_var| Show_all_var|Set_float_precision| END_INPUT {return 0;};
 
-Quit: QUIT {exit(0);};
-Show_Settings: SHOW SETTINGS SEMI {return 0;};
-Reset_Settings: RESET SETTINGS SEMI {return 0;};
-Set_H_View: SET H_VIEW OB REAL CB INTERVAL OB REAL CB SEMI {return 0;}; // set h_view [valor float] :  [valor float];
-Set_V_View: SET V_VIEW OB REAL CB INTERVAL OB REAL CB SEMI {return 0;}; // set v_view [valor float] :  [valor float];
-Set_Axis_On: SET AXIS ON SEMI {return 0;};
-Set_Axis_Off: SET AXIS OFF SEMI {return 0;};
+Quit: 
+    QUIT 
+    {
+        exit(0);
+    }
+;
 
-Calc_exp: Expression END_INPUT
+Show_Settings: 
+    SHOW SETTINGS SEMI END_INPUT 
+    {
+        print_settings(); 
+        return 0;
+    }
+;
+
+Reset_Settings: 
+    RESET SETTINGS SEMI END_INPUT 
+    {   
+        reset_settings();
+        return 0;
+    }
+;
+
+Set_View: 
+    SET H_VIEW OB Factor CB INTERVAL OB Factor CB SEMI END_INPUT // set h_view [valor float] :  [valor float];
+        { 
+            set_view($4,$8,'h'); 
+            return 0;
+        }
+    
+    |SET V_VIEW OB Factor CB INTERVAL OB Factor CB SEMI END_INPUT  // set v_view [valor float] :  [valor float];
+        {
+            set_view($4,$8,'v');
+            return 0;
+        }
+;
+
+Set_Axis: 
+    SET AXIS ON SEMI END_INPUT 
+        {
+            set_axis("ON");
+            return 0;
+        }
+    
+    |SET AXIS OFF SEMI END_INPUT
+        {
+            set_axis("OFF");
+            return 0;
+        }
+;
+
+Set_Erase_Plot:
+    SET ERASE PLOT ON SEMI END_INPUT 
+        {
+            set_erease_plot("ON");
+            return 0;
+        }
+    |SET ERASE PLOT OFF SEMI END_INPUT 
+        {
+            set_erease_plot("OFF");
+            return 0;
+        }
+;
+
+Set_integral_steps: 
+    SET INTEGRAL_STEPS INTEGER SEMI END_INPUT 
+        {
+            set_integral_steps($3);
+            return 0;
+        }
+;
+
+Set_float_precision: 
+    SET FLOAT PRECISION INTEGER SEMI END_INPUT 
+        {
+            set_float_precision($4);
+            return 0;
+        }
+;
+
+Calc_exp: Expression 
+    END_INPUT
     {
         printf("%f\n",$1); 
         return 0;
     }
-    
 ;
 
 Expression: 
     Factor {$$ = $1;}
-    |MINUS Factor {$$ = -$2;}
     |Expression PLUS Expression {$$ = $1 + $3;}
     |Expression MINUS Expression {$$ = $1 - $3;}
     |Expression DIV Expression 
@@ -130,6 +202,7 @@ Expression:
 Factor: 
     INTEGER 
     |REAL
+    |MINUS Factor {$$ = -$2;}
 ;
 
 Function: 
@@ -144,14 +217,7 @@ Plot_last: PLOT SEMI END_INPUT{return 0;};
 
 Plot: PLOT OP Function CP SEMI END_INPUT{printf("Plota a Função\n"); return 0;} ;
 
-Set_Erase_Plot:
-    SET ERASE PLOT ON END_INPUT{printf("EREASE PLOT ON\n"); return 0;}
-    |SET ERASE PLOT OFF END_INPUT{printf("EREASE PLOT OFF\n"); return 0;};
-
-
 Rpn: RPN OP Expression CP SEMI END_INPUT{printf("RPN\n"); return 0;};
-
-Integral_steps: SET INTEGRAL_STEPS INTEGER END_INPUT {printf("INTERGRAL STEPS\n"); return 0;};
 
 Integrate: INTEGRATE OP Factor INTERVAL Factor COMMA Function CP SEMI END_INPUT {printf("INTEGRATE\n"); return 0;}; 
 
@@ -182,8 +248,6 @@ Show_var: ID SEMI END_INPUT{printf("variavel; \n"); return 0;};
 
 Show_all_var: SHOW SYMBOLS SEMI END_INPUT{printf("show symbols;\n"); return 0;};
 
-Set_float_precision: SET FLOAT PRECISION INTEGER SEMI END_INPUT {printf("set float precision valor inteiro;"); return 0;};
-
 About: ABOUT SEMI END_INPUT {print_about(); return 0;};
 %%
 
@@ -212,3 +276,4 @@ void print_about(){
     printf("|          Matricula:   000000000000           |\n");
     printf("+----------------------------------------------+\n");
 }
+
