@@ -25,7 +25,12 @@
 
     char plot [25][80];
 
-    void plot_func();
+    extern float h_view_lo;
+    extern float h_view_hi; 
+
+    extern float v_view_lo;
+    extern float v_view_hi;
+    void plot_func(float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi);
 	extern int yylex();
 
 	void yyerror(char const *s);
@@ -267,7 +272,7 @@ Function:
 Plot_last: 
     PLOT SEMI END_INPUT
         {   
-            plot_func();
+            plot_func(h_view_lo,h_view_hi,v_view_lo,v_view_hi);
             return 0;
         }
 ;
@@ -340,7 +345,7 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
-void plot_func(){
+void plot_func(float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi){
 
     for(int i = 0; i < 25; i++){
         for(int j = 0; j < 80; j++){
@@ -348,7 +353,6 @@ void plot_func(){
                 plot[i][j] = '-';
                 
             }
-
             if(j == 40){
                 plot[i][j] = '|';
             }else if(i != 12){
