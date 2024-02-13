@@ -22,6 +22,10 @@
 
 	char *cadeia;
 
+
+    char plot [25][80];
+
+    void plot_func();
 	extern int yylex();
 
 	void yyerror(char const *s);
@@ -260,9 +264,21 @@ Function:
 ;
 
 
-Plot_last: PLOT SEMI END_INPUT{return 0;};
+Plot_last: 
+    PLOT SEMI END_INPUT
+        {   
+            plot_func();
+            return 0;
+        }
+;
 
-Plot: PLOT OP Function CP SEMI END_INPUT{printf("Plota a Função\n"); return 0;} ;
+Plot: 
+    PLOT OP Function CP SEMI END_INPUT
+        {
+            // printf("Plota a Função: %f\n", $3); 
+            return 0;
+        } 
+;
 
 Rpn: RPN OP Expression CP SEMI END_INPUT{printf("RPN\n"); return 0;};
 
@@ -322,5 +338,44 @@ void print_about(){
     printf("|          João Pedro Alves Rodrigues          |\n");
     printf("|          Matricula:   000000000000           |\n");
     printf("+----------------------------------------------+\n");
+}
+
+void plot_func(){
+
+    for(int i = 0; i < 25; i++){
+        for(int j = 0; j < 80; j++){
+            if(i == 12){
+                plot[i][j] = '-';
+                
+            }
+
+            if(j == 40){
+                plot[i][j] = '|';
+            }else if(i != 12){
+                plot[i][j] = ' ';
+            }
+        }
+    }
+
+    for(int i = 0; i < 25; i++){
+        for(int j = 0; j < 80; j++){
+            double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / (80 - 1);
+            double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / (25 - 1);
+            double sin_val = sin(x_val);
+
+            // Atribuir '*' onde o valor de y está próximo do seno de x
+            if (fabs(y_val - sin_val) < 0.2) {
+                plot[i][j] = '*';
+            }
+        }
+    }
+
+    for(int i = 0; i < 25; i++){
+        for(int j = 0; j < 80; j++){
+            printf("%c",plot[i][j]);
+        }
+        printf("\n");
+    }  
+
 }
 
