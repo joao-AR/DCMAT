@@ -17,6 +17,9 @@
 	extern int last_new_line;
 	extern int current_char_index;
 
+    float pi = 3.14159265;
+    float e = 2.71828182;
+
 	char *cadeia;
 
 	extern int yylex();
@@ -28,7 +31,7 @@
     double dval;
 }
 
-%type <dval> Expression Factor 
+%type <dval> Expression Factor Function
 
 %locations
 %define parse.lac full
@@ -90,7 +93,33 @@
 %token END_INPUT 
 %%
 
-first: About|Show_Settings|Reset_Settings|Set_View|Set_Axis|Plot_last|Plot|Set_Erase_Plot|Calc_exp|Function|Matrix|Integrate|Sum| Rpn| Set_integral_steps| Show_matrix|Quit|Solve_determinant| Solve_linear_system|Attr_val_simb|Attr_val_matrix| Show_var| Show_all_var|Set_float_precision| END_INPUT {return 0;};
+first: 
+    Quit
+    | Attr_val_simb
+    | Attr_val_matrix
+    | Calc_exp 
+    | Calc_func 
+    | Show_Settings 
+    | Reset_Settings 
+    | Set_View
+    | Set_Axis 
+    | Set_Erase_Plot
+    | Plot_last 
+    | Plot 
+    | Matrix 
+    | Integrate 
+    | Sum
+    | Rpn 
+    | Set_integral_steps 
+    | Show_matrix
+    | About 
+    | Solve_determinant
+    | Solve_linear_system
+    | Show_var
+    | Show_all_var
+    | Set_float_precision
+    | END_INPUT {return 0;}
+;
 
 Quit: 
     QUIT 
@@ -172,8 +201,8 @@ Set_float_precision:
         }
 ;
 
-Calc_exp: Expression 
-    END_INPUT
+Calc_exp: 
+    Expression END_INPUT
     {
         printf("%f\n",$1); 
         return 0;
@@ -182,6 +211,9 @@ Calc_exp: Expression
 
 Expression: 
     Factor {$$ = $1;}
+    |X 
+    |PI {$$ = pi ;}
+    |E {$$ = e;}
     |Expression PLUS Expression {$$ = $1 + $3;}
     |Expression MINUS Expression {$$ = $1 - $3;}
     |Expression DIV Expression 
@@ -205,13 +237,28 @@ Factor:
     |MINUS Factor {$$ = -$2;}
 ;
 
+Calc_func: Function END_INPUT 
+    {
+        printf("%f\n", $1); 
+        return 0;
+    }
+    ;
+
 Function: 
-    SEN OP Expression CP {printf("RESONVE SENO\n"); return 0;}
-    |COS OP Expression CP {printf("RESONVE COSSENO\n"); return 0;}
-    |TAN OP Expression CP {printf("RESONVE TANGENTE\n"); return 0;}
-    /* |Factor X PLUS Factor {printf("FUNCAO PRIMEIRO GRAU\n"); return 0;}
-    |Factor X POW '2'  {printf("FUNCAO SEGUNDO GRAU\n"); return 0;} */
+    SEN OP Expression CP 
+        {
+            $$ = sin($3 * pi / 180); // Convert degress to radians
+        }
+    | COS OP Expression CP 
+        {
+            $$ = cos($3 * pi / 180); // Convert degress to radians
+        }
+    | TAN OP Expression CP 
+        {
+            $$ = tan($3 * pi / 180); // Convert degress to radians
+        }
 ;
+
 
 Plot_last: PLOT SEMI END_INPUT{return 0;};
 
