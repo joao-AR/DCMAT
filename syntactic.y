@@ -25,12 +25,22 @@
 
     char plot [25][80];
 
+    //From Settings
     extern float h_view_lo;
     extern float h_view_hi; 
-
     extern float v_view_lo;
     extern float v_view_hi;
-    void plot_func(float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi);
+    extern int precision;
+    extern int integral_steps;
+    extern char* draw_axis;
+    extern char* erease_plot;
+    extern char* connect_dots;
+    //End From Settigns 
+
+    //Custom
+    char* type_func;
+    float exp_result = 0;
+    void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result);
 	extern int yylex();
 
 	void yyerror(char const *s);
@@ -137,6 +147,8 @@ Quit:
     }
 ;
 
+//------------- SETTINGS
+
 Show_Settings: 
     SHOW SETTINGS SEMI END_INPUT 
     {
@@ -210,6 +222,8 @@ Set_float_precision:
         }
 ;
 
+//------------- END SETTINGS
+
 Calc_exp: 
     Expression END_INPUT
     {
@@ -220,7 +234,7 @@ Calc_exp:
 
 Expression: 
     Factor {$$ = $1;}
-    |X 
+    |X {$$ = 0;}
     |PI {$$ = pi ;}
     |E {$$ = e;}
     |Expression PLUS Expression {$$ = $1 + $3;}
@@ -255,15 +269,22 @@ Calc_func: Function END_INPUT
 
 Function: 
     SEN OP Expression CP 
-        {
+        {   
+            exp_result = $3;
+            type_func = "sin";
             $$ = sin($3 * pi / 180); // Convert degress to radians
         }
+    
     | COS OP Expression CP 
-        {
+        {   
+            exp_result = $3;
+            type_func = "cos";
             $$ = cos($3 * pi / 180); // Convert degress to radians
         }
     | TAN OP Expression CP 
-        {
+        {   
+            exp_result = $3;
+            type_func = "tan";
             $$ = tan($3 * pi / 180); // Convert degress to radians
         }
 ;
@@ -272,7 +293,7 @@ Function:
 Plot_last: 
     PLOT SEMI END_INPUT
         {   
-            plot_func(h_view_lo,h_view_hi,v_view_lo,v_view_hi);
+            // plot_func(h_view_lo,h_view_hi,v_view_lo,v_view_hi);
             return 0;
         }
 ;
@@ -280,6 +301,8 @@ Plot_last:
 Plot: 
     PLOT OP Function CP SEMI END_INPUT
         {
+            plot_func(draw_axis,h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
+
             // printf("Plota a Função: %f\n", $3); 
             return 0;
         } 
@@ -345,30 +368,50 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
-void plot_func(float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi){
+void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result){
 
+    printf("\n\n");
+    // Draw plot axis
     for(int i = 0; i < 25; i++){
         for(int j = 0; j < 80; j++){
-            if(i == 12){
-                plot[i][j] = '-';
-                
-            }
-            if(j == 40){
-                plot[i][j] = '|';
-            }else if(i != 12){
+            if(strcmp("OFF",draw_axis)==0){
                 plot[i][j] = ' ';
+            }else{
+                if(i == 12){
+                    plot[i][j] = '-';
+                    
+                }
+                if(j == 40){
+                    plot[i][j] = '|';
+                }else if(i != 12){
+                    plot[i][j] = ' ';
+                }
             }
         }
     }
 
+    //grafico inverfico AJUSTAR
     for(int i = 0; i < 25; i++){
         for(int j = 0; j < 80; j++){
             double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / (80 - 1);
             double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / (25 - 1);
-            double sin_val = sin(x_val);
+            double calc_val;
+            
+            if(strcmp("sin",type_func) == 0){
+
+                calc_val = sin(x_val + exp_result);
+
+            }else if(strcmp("cos",type_func) == 0){
+
+                calc_val = cos(x_val + exp_result);
+
+            }else if(strcmp("tan",type_func ) == 0){
+
+                calc_val = tan(x_val + exp_result);
+            }
 
             // Atribuir '*' onde o valor de y está próximo do seno de x
-            if (fabs(y_val - sin_val) < 0.2) {
+            if (fabs(y_val - calc_val) < 0.2) {
                 plot[i][j] = '*';
             }
         }
@@ -380,6 +423,6 @@ void plot_func(float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi){
         }
         printf("\n");
     }  
-
+    printf("\n");
 }
 
