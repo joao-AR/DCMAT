@@ -1,0 +1,4 @@
+plot(sen(x));
+plot(cos(x));
+plot(tan(x));
+quit

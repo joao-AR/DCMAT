@@ -1,4 +1,4 @@
 clear
 make clean
 make
-./dcmat
+./dcmat < ./tests.txt
