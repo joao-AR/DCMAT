@@ -224,6 +224,7 @@ Set_float_precision:
 
 //------------- END SETTINGS
 
+//------------- Expressions 
 Calc_exp: 
     Expression END_INPUT
     {
@@ -234,7 +235,7 @@ Calc_exp:
 
 Expression: 
     Factor {$$ = $1;}
-    |X {$$ = 0;}
+    |X {$$ = h_view_lo + 0 * (v_view_hi - h_view_lo) / (80 - 1);}
     |PI {$$ = pi ;}
     |E {$$ = e;}
     |Expression PLUS Expression {$$ = $1 + $3;}
@@ -253,7 +254,9 @@ Expression:
     |Expression REST Expression {$$ = fmod($1,$3);}
     |OP Expression CP {$$ = $2;}
 ;
-    
+
+//------------- END Expressions 
+
 Factor: 
     INTEGER 
     |REAL
@@ -270,6 +273,7 @@ Calc_func: Function END_INPUT
 Function: 
     SEN OP Expression CP 
         {   
+            // printf("\n X= %f\n",$3);
             exp_result = $3;
             type_func = "sin";
             $$ = sin($3 * pi / 180); // Convert degress to radians
@@ -368,8 +372,8 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
-void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result){
-
+void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,double exp_result){
+    
     printf("\n\n");
     // Draw plot axis
     for(int i = 0; i < 25; i++){
@@ -390,24 +394,40 @@ void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,
         }
     }
 
-    //grafico inverfico AJUSTAR
+    //grafico invertido AJUSTAR
     for(int i = 0; i < 25; i++){
         for(int j = 0; j < 80; j++){
-            double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / (80 - 1);
-            double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / (25 - 1);
+            double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / 79; // 79 = 80 - 1
+            double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / 24; // 24 = 24 - 1 
+
+            // Adjust to the Three Rule of X 
+            if(x_val < 0){  
+                if(h_view_lo >= 0){
+                    h_view_lo  = h_view_lo  * -1;
+                    exp_result = exp_result * -1;
+                }
+            }
+
+            // Three Rule of X and Y
+            double proportional_x = exp_result * x_val / h_view_lo;
+            /* double proportional_y = y_val * proportional_x / x_val; */
+            // End Three Rules
+
             double calc_val;
+            /* printf("\nX = %f * %f / %f\n",exp_result,valor_atual,h_view_lo);
+            printf("%d) x_val [ %f ] proportional_x[ %f ]\n",j,x_val,proportional_x); */
             
             if(strcmp("sin",type_func) == 0){
 
-                calc_val = sin(x_val + exp_result);
+                calc_val = sin(proportional_x );
 
             }else if(strcmp("cos",type_func) == 0){
 
-                calc_val = cos(x_val + exp_result);
+                calc_val = cos(proportional_x);
 
             }else if(strcmp("tan",type_func ) == 0){
 
-                calc_val = tan(x_val + exp_result);
+                calc_val = tan(proportional_x);
             }
 
             // Atribuir '*' onde o valor de y está próximo do seno de x
