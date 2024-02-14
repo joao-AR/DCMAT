@@ -3,27 +3,22 @@
 	#include <stdlib.h>
 	#include <string.h>
     #include <math.h>
-
+    
     #include "settings.h"
+    #include "plot.h"
 
-    void print_about();
+    // From lex.l
 	extern char* yytext;
 	extern int yyleng;
 	extern int yychar;
-
 	extern int line;
 	extern int column;
-	
 	extern int last_new_line;
 	extern int current_char_index;
+    // END From lex.l
 
     float pi = 3.14159265;
     float e = 2.71828182;
-
-	char *cadeia;
-
-
-    char plot [25][80];
 
     //From Settings
     extern float h_view_lo;
@@ -37,12 +32,18 @@
     extern char* connect_dots;
     //End From Settigns 
 
-    //Custom
+    //From plot.c
+    extern char plot;
+    
+    //Custom VAR
     char* type_func;
     float exp_result = 0;
-    void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result);
-	extern int yylex();
+    int function_difined = 1; // 0 = True 1 = False 
+	//End Custom VAR
 
+    void print_about();
+
+    extern int yylex();
 	void yyerror(char const *s);
 %}
 
@@ -273,7 +274,7 @@ Calc_func: Function END_INPUT
 Function: 
     SEN OP Expression CP 
         {   
-            // printf("\n X= %f\n",$3);
+            function_difined = 0;
             exp_result = $3;
             type_func = "sin";
             $$ = sin($3 * pi / 180); // Convert degress to radians
@@ -281,33 +282,39 @@ Function:
     
     | COS OP Expression CP 
         {   
+            function_difined = 0;
             exp_result = $3;
             type_func = "cos";
             $$ = cos($3 * pi / 180); // Convert degress to radians
         }
     | TAN OP Expression CP 
         {   
+            function_difined = 0;
             exp_result = $3;
             type_func = "tan";
             $$ = tan($3 * pi / 180); // Convert degress to radians
         }
 ;
 
-
+// Plot the last functions passed 
 Plot_last: 
     PLOT SEMI END_INPUT
         {   
-            // plot_func(h_view_lo,h_view_hi,v_view_lo,v_view_hi);
+            if(function_difined == 0){
+                plot_config(draw_axis,erease_plot);
+                plot_manipulation(h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
+            }else{
+                printf("\nNo Function defined!\n");
+            }
             return 0;
         }
 ;
 
 Plot: 
     PLOT OP Function CP SEMI END_INPUT
-        {
-            plot_func(draw_axis,h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
-
-            // printf("Plota a Função: %f\n", $3); 
+        {   
+            plot_config(draw_axis,erease_plot);
+            plot_manipulation(h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
             return 0;
         } 
 ;
@@ -370,79 +377,5 @@ void print_about(){
     printf("|          João Pedro Alves Rodrigues          |\n");
     printf("|          Matricula:   000000000000           |\n");
     printf("+----------------------------------------------+\n");
-}
-
-void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result){
-    
-    printf("\n\n");
-    // Draw plot axis
-    for(int i = 0; i < 25; i++){
-        for(int j = 0; j < 80; j++){
-            if(strcmp("OFF",draw_axis)==0){
-                plot[i][j] = ' ';
-            }else{
-                if(i == 12){
-                    plot[i][j] = '-';
-                    
-                }
-                if(j == 40){
-                    plot[i][j] = '|';
-                }else if(i != 12){
-                    plot[i][j] = ' ';
-                }
-            }
-        }
-    }
-
-    //grafico invertido AJUSTAR
-    for(int i = 0; i < 25; i++){
-        for(int j = 0; j < 80; j++){
-            double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / 79; // 79 = 80 - 1
-            double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / 24; // 24 = 24 - 1 
-
-            // Adjust to the Three Rule of X 
-            if(x_val < 0){  
-                if(h_view_lo >= 0){
-                    h_view_lo  = h_view_lo  * -1;
-                    exp_result = exp_result * -1;
-                }
-            }
-
-            // Three Rule of X and Y
-            double proportional_x = exp_result * x_val / h_view_lo;
-            /* double proportional_y = y_val * proportional_x / x_val; */
-            // End Three Rules
-
-            double calc_val;
-            /* printf("\nX = %f * %f / %f\n",exp_result,valor_atual,h_view_lo);
-            printf("%d) x_val [ %f ] proportional_x[ %f ]\n",j,x_val,proportional_x); */
-            
-            if(strcmp("sin",type_func) == 0){
-
-                calc_val = sin(proportional_x )*-1;
-
-            }else if(strcmp("cos",type_func) == 0){
-
-                calc_val = cos(proportional_x)*-1;
-
-            }else if(strcmp("tan",type_func ) == 0){
-
-                calc_val = tan(proportional_x)*-1;
-            }
-
-            // Atribuir '*' onde o valor de y está próximo do seno de x
-            if (fabs(y_val - calc_val) < 0.2) {
-                plot[i][j] = '*';
-            }
-        }
-    }
-
-    for(int i = 0; i < 25; i++){
-        for(int j = 0; j < 80; j++){
-            printf("%c",plot[i][j]);
-        }
-        printf("\n");
-    }  
-    printf("\n");
 }
 
