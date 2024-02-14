@@ -372,7 +372,7 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
-void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,double exp_result){
+void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result){
     
     printf("\n\n");
     // Draw plot axis
@@ -419,15 +419,15 @@ void plot_func(char* draw_axis, float h_view_lo,float h_view_hi,float v_view_lo,
             
             if(strcmp("sin",type_func) == 0){
 
-                calc_val = sin(proportional_x );
+                calc_val = sin(proportional_x )*-1;
 
             }else if(strcmp("cos",type_func) == 0){
 
-                calc_val = cos(proportional_x);
+                calc_val = cos(proportional_x)*-1;
 
             }else if(strcmp("tan",type_func ) == 0){
 
-                calc_val = tan(proportional_x);
+                calc_val = tan(proportional_x)*-1;
             }
 
             // Atribuir '*' onde o valor de y está próximo do seno de x
