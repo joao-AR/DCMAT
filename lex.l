@@ -11,7 +11,7 @@
 
 %option noyywrap
 
-ID				[A-Za-z][_A-Za-z0-9]*
+VAR				[A-Za-z][_A-Za-z0-9]*
 INTEGER			[0-9]+
 REAL            [0-9]+"."[0-9]+
 
@@ -72,7 +72,7 @@ REAL            [0-9]+"."[0-9]+
 
 {INTEGER} {yylval.dval = atof(yytext); return INTEGER;}
 {REAL} {yylval.dval = atof(yytext); return REAL;}
-{ID} {return ID;}
+{VAR} { yylval.sval = strdup(yytext); return VAR;}
 
 [\n] {return END_INPUT;}
 [ \t] {} //ignore white spaces

@@ -55,10 +55,11 @@
 
 %union{
     double dval;
+    char *sval;
 }
 
 %type <dval> Expression Factor Function
-
+%type <sval> Rpn_expression Rpn_func Rpn_term
 %locations
 %define parse.lac full
 %define parse.error verbose
@@ -115,7 +116,7 @@
 
 %token  <dval> INTEGER
 %token  <dval> REAL
-%token  ID
+%token  <sval> VAR
 %token END_INPUT 
 %%
 
@@ -123,8 +124,12 @@ first:
     Quit
     | Attr_val_simb
     | Attr_val_matrix
-    | Calc_exp 
-    | Calc_func 
+    | Expression END_INPUT
+        { 
+            stack_pop_all(&rpn);
+            printf("%f\n",$1); 
+            return 0;
+        } 
     | Show_Settings 
     | Reset_Settings 
     | Set_View
@@ -232,16 +237,15 @@ Set_float_precision:
 //------------- END SETTINGS
 
 //------------- Expressions 
-Calc_exp: 
-    Expression END_INPUT
-    {
-        printf("%f\n",$1); 
-        return 0;
-    }
-;
 
-Expression: 
-    Factor {$$ = $1; aux_rpn_value = to_string($1); rpn = stack_push(rpn,aux_rpn_value);  stack_print(rpn);}
+Expression:
+    Function
+    |Factor 
+        {
+            $$ = $1; 
+            aux_rpn_value = to_string($1);
+            rpn = stack_push(rpn,aux_rpn_value);  
+        }
     |X 
         {
             $$ = h_view_lo;
@@ -259,13 +263,11 @@ Expression:
         {
             $$ = $1 + $3; 
             rpn = stack_push(rpn,"+"); 
-            stack_print(rpn);
         }
     |Expression MINUS Expression 
         {
             $$ = $1 - $3; 
             rpn = stack_push(rpn,"-"); 
-            stack_print(rpn);
         }
     |Expression DIV Expression  
         {
@@ -275,54 +277,35 @@ Expression:
             }else{
                 $$ = $1 / $3;
                 rpn = stack_push(rpn,"/"); 
-                stack_print(rpn);
             }
         }
     |Expression MULT Expression 
         {
             $$ = $1 * $3;
             rpn = stack_push(rpn,"*"); 
-            stack_print(rpn);
         }
     |Expression POW Expression 
         {
             $$ = pow($1,$3);
             rpn = stack_push(rpn,"^"); 
-            stack_print(rpn);
         }
     |Expression REST Expression 
         {
             $$ = fmod($1,$3);
             rpn = stack_push(rpn,"%"); 
-            stack_print(rpn);
         }
     |OP Expression CP 
         {
             $$ = $2;
         }
 ;
-
-//------------- END Expressions 
-
-Factor: 
-    INTEGER 
-    |REAL
-    |MINUS Factor {$$ = -$2;}
-;
-
-Calc_func: Function END_INPUT 
-    {
-        printf("%f\n", $1); 
-        return 0;
-    }
-    ;
-
 Function: 
     SEN OP Expression CP 
         {   
             function_difined = 0;
             exp_result = $3;
             type_func = "sin";
+            rpn = stack_push(rpn,"SEN"); 
             $$ = sin($3 * pi / 180); // Convert degress to radians
         }
     
@@ -331,6 +314,7 @@ Function:
             function_difined = 0;
             exp_result = $3;
             type_func = "cos";
+            rpn = stack_push(rpn,"COS"); 
             $$ = cos($3 * pi / 180); // Convert degress to radians
         }
     | TAN OP Expression CP 
@@ -338,10 +322,20 @@ Function:
             function_difined = 0;
             exp_result = $3;
             type_func = "tan";
+            rpn = stack_push(rpn,"TAN"); 
             $$ = tan($3 * pi / 180); // Convert degress to radians
         }
 ;
 
+Factor: 
+    INTEGER 
+    |REAL
+    |MINUS Factor {$$ = -$2;}
+;
+
+//------------- END Expressions 
+
+//------------- Plot
 // Plot the last functions passed 
 Plot_last: 
     PLOT SEMI END_INPUT
@@ -364,12 +358,92 @@ Plot:
             return 0;
         } 
 ;
+//------------- END PLOT
 
-Rpn: RPN OP Expression CP SEMI END_INPUT{printf("RPN\n"); return 0;};
+//------------- RPN
+Rpn: RPN OP Rpn_expression CP SEMI END_INPUT 
+    {   
+        stack_reverse_print(rpn);
+        stack_pop_all(&rpn);
+        return 0;
+    };
 
+Rpn_term:
+    VAR {
+        rpn = stack_push(rpn,$1);  
+    }
+    |X 
+        {
+            rpn = stack_push(rpn,"x");
+        }
+    |PI 
+        {
+            aux_rpn_value = to_string(pi);
+            rpn = stack_push(rpn,aux_rpn_value);  
+        }
+    |E 
+        {   
+            aux_rpn_value = to_string(e);
+            rpn = stack_push(rpn,aux_rpn_value);  
+        }
+
+Rpn_expression:
+    Rpn_term
+    |Rpn_func
+    |Factor 
+        {
+            aux_rpn_value = to_string($1);
+            rpn = stack_push(rpn,aux_rpn_value);  
+        }
+    
+    |Rpn_expression PLUS Rpn_expression 
+        {
+            rpn = stack_push(rpn,"+"); 
+        }
+    |Rpn_expression MINUS Rpn_expression 
+        {
+            rpn = stack_push(rpn,"-"); 
+        }
+    |Rpn_expression DIV Rpn_expression  
+        {
+            rpn = stack_push(rpn,"/"); 
+        }
+    |Rpn_expression MULT Rpn_expression 
+        {
+            rpn = stack_push(rpn,"*"); 
+        }
+    |Rpn_expression POW Rpn_expression 
+        {
+            rpn = stack_push(rpn,"^"); 
+        }
+    |Rpn_expression REST Rpn_expression 
+        {
+            rpn = stack_push(rpn,"%"); 
+        }
+    |OP Rpn_expression CP 
+        {
+            $$ = $2;
+        }
+;
+
+Rpn_func:
+    SEN OP Rpn_expression CP 
+        {   
+            rpn = stack_push(rpn,"SEN"); 
+        }
+    
+    | COS OP Rpn_expression CP 
+        {   
+            rpn = stack_push(rpn,"COS"); 
+        }
+    | TAN OP Rpn_expression CP 
+        {   
+            rpn = stack_push(rpn,"TAN"); 
+        }
+//------------- END RPN
 Integrate: INTEGRATE OP Factor INTERVAL Factor COMMA Function CP SEMI END_INPUT {printf("INTEGRATE\n"); return 0;}; 
 
-Sum: SUM OP ID COMMA Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT {printf("SOMATORIO\n"); return 0;}; 
+Sum: SUM OP VAR COMMA Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT {printf("SOMATORIO\n"); return 0;}; 
 
 Matrix: 
     OB INTEGER Matrix_Value CB SEMI END_INPUT{printf("matrix[%f]",$2); return 0;}
@@ -388,11 +462,11 @@ Solve_determinant: SOLVE DETERMINANT SEMI END_INPUT{printf("SOLVE DETERMINANT\n"
 
 Solve_linear_system: SOLVE LINEAR_SYSTEM SEMI END_INPUT{printf("SOLVE linear SYSTEM\n"); return 0;}
 
-Attr_val_simb: ID ATRI Expression END_INPUT {printf("varaivel := expressao\n"); return 0;};
+Attr_val_simb: VAR ATRI Expression END_INPUT {printf("varaivel := expressao\n"); return 0;};
 
-Attr_val_matrix: ID ATRI Matrix END_INPUT{printf("varaivel := matrix\n"); return 0;};
+Attr_val_matrix: VAR ATRI Matrix END_INPUT{printf("varaivel := matrix\n"); return 0;};
 
-Show_var: ID SEMI END_INPUT{printf("variavel; \n"); return 0;};
+Show_var: VAR SEMI END_INPUT{printf("variavel; \n"); return 0;};
 
 Show_all_var: SHOW SYMBOLS SEMI END_INPUT{printf("show symbols;\n"); return 0;};
 
@@ -400,12 +474,11 @@ About: ABOUT SEMI END_INPUT {print_about(); return 0;};
 %%
 
 
-int main(int argc, char** argv){
+int main(int argc, char** argv){ 
     while (1) {
         printf("> ");
         yyparse();
-   
-    }
+    } 
 	return 0;
 }
 
