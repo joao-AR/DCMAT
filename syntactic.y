@@ -6,6 +6,10 @@
     
     #include "settings.h"
     #include "plot.h"
+    #include "stack.h"
+
+    Stack_node *rpn = NULL; // init top Stack as NULL
+    Stack_node *remove_rpn_node;
 
     // From lex.l
 	extern char* yytext;
@@ -37,11 +41,13 @@
     
     //Custom VAR
     char* type_func;
+    char* aux_rpn_value;
     float exp_result = 0;
     int function_difined = 1; // 0 = True 1 = False 
 	//End Custom VAR
 
     void print_about();
+    char* to_string(float value);
 
     extern int yylex();
 	void yyerror(char const *s);
@@ -235,25 +241,65 @@ Calc_exp:
 ;
 
 Expression: 
-    Factor {$$ = $1;}
-    |X {$$ = h_view_lo + 0 * (v_view_hi - h_view_lo) / (80 - 1);}
-    |PI {$$ = pi ;}
-    |E {$$ = e;}
-    |Expression PLUS Expression {$$ = $1 + $3;}
-    |Expression MINUS Expression {$$ = $1 - $3;}
-    |Expression DIV Expression 
+    Factor {$$ = $1; aux_rpn_value = to_string($1); rpn = stack_push(rpn,aux_rpn_value);  stack_print(rpn);}
+    |X 
+        {
+            $$ = h_view_lo;
+            rpn = stack_push(rpn,"x");
+        }
+    |PI 
+        {
+            $$ = pi ;
+        }
+    |E 
+        {
+        $$ = e;
+        }
+    |Expression PLUS Expression 
+        {
+            $$ = $1 + $3; 
+            rpn = stack_push(rpn,"+"); 
+            stack_print(rpn);
+        }
+    |Expression MINUS Expression 
+        {
+            $$ = $1 - $3; 
+            rpn = stack_push(rpn,"-"); 
+            stack_print(rpn);
+        }
+    |Expression DIV Expression  
         {
             if($3 == 0){
                 printf("ERROR division by ZERO\n");
                 return 0;
             }else{
                 $$ = $1 / $3;
+                rpn = stack_push(rpn,"/"); 
+                stack_print(rpn);
             }
         }
-    |Expression MULT Expression {$$ = $1 * $3;}
-    |Expression POW Expression {$$ = pow($1,$3);}
-    |Expression REST Expression {$$ = fmod($1,$3);}
-    |OP Expression CP {$$ = $2;}
+    |Expression MULT Expression 
+        {
+            $$ = $1 * $3;
+            rpn = stack_push(rpn,"*"); 
+            stack_print(rpn);
+        }
+    |Expression POW Expression 
+        {
+            $$ = pow($1,$3);
+            rpn = stack_push(rpn,"^"); 
+            stack_print(rpn);
+        }
+    |Expression REST Expression 
+        {
+            $$ = fmod($1,$3);
+            rpn = stack_push(rpn,"%"); 
+            stack_print(rpn);
+        }
+    |OP Expression CP 
+        {
+            $$ = $2;
+        }
 ;
 
 //------------- END Expressions 
@@ -354,11 +400,11 @@ About: ABOUT SEMI END_INPUT {print_about(); return 0;};
 %%
 
 
-
 int main(int argc, char** argv){
     while (1) {
         printf("> ");
         yyparse();
+   
     }
 	return 0;
 }
@@ -371,7 +417,6 @@ void yyerror(char const *s){
 }
 
 
-
 void print_about(){
     printf("+----------------------------------------------+\n");    
     printf("|          João Pedro Alves Rodrigues          |\n");
@@ -379,3 +424,15 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
+char* to_string(float value){
+    // Determine the maximum size needed for the string
+    int size = snprintf(NULL, 0, "%f", value);
+
+    // Allocate memory for the string
+    char* result = (char*)malloc(size + 1);  // +1 for the null terminator
+
+    // Convert float to string
+    snprintf(result, size + 1, "%f", value);
+
+    return result;
+}
