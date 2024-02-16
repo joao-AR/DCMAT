@@ -7,10 +7,7 @@
     #include "settings.h"
     #include "plot.h"
     #include "stack.h"
-
-    Stack_node *rpn = NULL; // init top Stack as NULL
-    Stack_node *remove_rpn_node;
-
+    
     // From lex.l
 	extern char* yytext;
 	extern int yyleng;
@@ -41,16 +38,22 @@
     
     //Custom VAR
     char* type_func;
-    char* aux_rpn_value;
     float exp_result = 0;
     int function_difined = 1; // 0 = True 1 = False 
+    char* aux_string;
+    char* rpn_string;
+    char* exp_str;
+    char* exp_str_last; // Used to save the last expression, plot;
 	//End Custom VAR
-
-    void print_about();
-    char* to_string(float value);
-
+    
     extern int yylex();
 	void yyerror(char const *s);
+
+    // Custom Functions
+    void print_about();
+    char* concat_strings(const char* str1, const char* str2);
+    char* to_string(float value);
+
 %}
 
 %union{
@@ -125,8 +128,11 @@ first:
     | Attr_val_simb
     | Attr_val_matrix
     | Expression END_INPUT
-        { 
-            stack_pop_all(&rpn);
+        {   
+            strcpy(exp_str_last,exp_str);
+            free(exp_str); 
+            
+            exp_str = malloc(sizeof(char*));
             printf("%f\n",$1); 
             return 0;
         } 
@@ -141,6 +147,10 @@ first:
     | Integrate 
     | Sum
     | Rpn 
+        { 
+            free(rpn_string); 
+            rpn_string = malloc(sizeof(char*));
+        }
     | Set_integral_steps 
     | Show_matrix
     | About 
@@ -243,31 +253,36 @@ Expression:
     |Factor 
         {
             $$ = $1; 
-            aux_rpn_value = to_string($1);
-            rpn = stack_push(rpn,aux_rpn_value);  
+            aux_string = to_string($1); 
+            exp_str = concat_strings(exp_str,aux_string);
         }
     |X 
         {
             $$ = h_view_lo;
-            rpn = stack_push(rpn,"x");
+            exp_str = concat_strings(exp_str,"x");
         }
     |PI 
         {
             $$ = pi ;
+            aux_string = to_string(pi);
+            exp_str = concat_strings(exp_str,aux_string);
         }
     |E 
         {
-        $$ = e;
+            $$ = e;
+            aux_string = to_string(e);
+            exp_str = concat_strings(exp_str,aux_string);
         }
     |Expression PLUS Expression 
         {
             $$ = $1 + $3; 
-            rpn = stack_push(rpn,"+"); 
+            exp_str = concat_strings(exp_str,"+");
+
         }
     |Expression MINUS Expression 
         {
             $$ = $1 - $3; 
-            rpn = stack_push(rpn,"-"); 
+            exp_str = concat_strings(exp_str,"-"); 
         }
     |Expression DIV Expression  
         {
@@ -276,36 +291,37 @@ Expression:
                 return 0;
             }else{
                 $$ = $1 / $3;
-                rpn = stack_push(rpn,"/"); 
+                exp_str = concat_strings(exp_str,"/");
             }
         }
     |Expression MULT Expression 
         {
             $$ = $1 * $3;
-            rpn = stack_push(rpn,"*"); 
+            exp_str = concat_strings(exp_str,"*"); 
         }
     |Expression POW Expression 
         {
             $$ = pow($1,$3);
-            rpn = stack_push(rpn,"^"); 
+            exp_str = concat_strings(exp_str,"^"); 
         }
     |Expression REST Expression 
         {
             $$ = fmod($1,$3);
-            rpn = stack_push(rpn,"%"); 
+            exp_str = concat_strings(exp_str,"%");
         }
     |OP Expression CP 
         {
             $$ = $2;
         }
 ;
+
 Function: 
     SEN OP Expression CP 
         {   
             function_difined = 0;
             exp_result = $3;
             type_func = "sin";
-            rpn = stack_push(rpn,"SEN"); 
+            exp_str = concat_strings(exp_str,"SEN"); 
             $$ = sin($3 * pi / 180); // Convert degress to radians
         }
     
@@ -314,7 +330,7 @@ Function:
             function_difined = 0;
             exp_result = $3;
             type_func = "cos";
-            rpn = stack_push(rpn,"COS"); 
+            exp_str = concat_strings(exp_str,"COS"); 
             $$ = cos($3 * pi / 180); // Convert degress to radians
         }
     | TAN OP Expression CP 
@@ -322,7 +338,7 @@ Function:
             function_difined = 0;
             exp_result = $3;
             type_func = "tan";
-            rpn = stack_push(rpn,"TAN"); 
+            exp_str = concat_strings(exp_str,"TAN"); 
             $$ = tan($3 * pi / 180); // Convert degress to radians
         }
 ;
@@ -340,12 +356,13 @@ Factor:
 Plot_last: 
     PLOT SEMI END_INPUT
         {   
-            if(function_difined == 0){
-                plot_config(draw_axis,erease_plot);
-                plot_manipulation(h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
-            }else{
-                printf("\nNo Function defined!\n");
-            }
+            printf("%s)",exp_str_last);
+            // if(function_difined == 0){
+            //     plot_config(draw_axis,erease_plot);
+            //     plot_manipulation(h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
+            // }else{
+            //     printf("\nNo Function defined!\n");
+            // }
             return 0;
         }
 ;
@@ -363,62 +380,63 @@ Plot:
 //------------- RPN
 Rpn: RPN OP Rpn_expression CP SEMI END_INPUT 
     {   
-        stack_reverse_print(rpn);
-        stack_pop_all(&rpn);
+        printf("%s\n",rpn_string);
         return 0;
-    };
+    }
+;
 
 Rpn_term:
     VAR {
-        rpn = stack_push(rpn,$1);  
+        rpn_string = concat_strings(rpn_string,$1);  
     }
     |X 
         {
-            rpn = stack_push(rpn,"x");
+            rpn_string = concat_strings(rpn_string,"x");
         }
     |PI 
         {
-            aux_rpn_value = to_string(pi);
-            rpn = stack_push(rpn,aux_rpn_value);  
+            aux_string = to_string(pi);
+            rpn_string = concat_strings(rpn_string,aux_string);  
         }
     |E 
         {   
-            aux_rpn_value = to_string(e);
-            rpn = stack_push(rpn,aux_rpn_value);  
+            aux_string = to_string(e);
+            rpn_string = concat_strings(rpn_string,aux_string);   
         }
+;
 
 Rpn_expression:
     Rpn_term
     |Rpn_func
     |Factor 
-        {
-            aux_rpn_value = to_string($1);
-            rpn = stack_push(rpn,aux_rpn_value);  
+        {   
+            aux_string = to_string($1);
+            rpn_string = concat_strings(rpn_string,aux_string);
         }
     
     |Rpn_expression PLUS Rpn_expression 
         {
-            rpn = stack_push(rpn,"+"); 
+            rpn_string = concat_strings(rpn_string,"+"); 
         }
     |Rpn_expression MINUS Rpn_expression 
         {
-            rpn = stack_push(rpn,"-"); 
+            rpn_string = concat_strings(rpn_string,"-"); 
         }
     |Rpn_expression DIV Rpn_expression  
         {
-            rpn = stack_push(rpn,"/"); 
+            rpn_string = concat_strings(rpn_string,"/"); 
         }
     |Rpn_expression MULT Rpn_expression 
         {
-            rpn = stack_push(rpn,"*"); 
+            rpn_string = concat_strings(rpn_string,"*"); 
         }
     |Rpn_expression POW Rpn_expression 
         {
-            rpn = stack_push(rpn,"^"); 
+            rpn_string = concat_strings(rpn_string,"^"); 
         }
     |Rpn_expression REST Rpn_expression 
         {
-            rpn = stack_push(rpn,"%"); 
+            rpn_string = concat_strings(rpn_string,"%"); 
         }
     |OP Rpn_expression CP 
         {
@@ -429,17 +447,18 @@ Rpn_expression:
 Rpn_func:
     SEN OP Rpn_expression CP 
         {   
-            rpn = stack_push(rpn,"SEN"); 
+            rpn_string = concat_strings(rpn_string,"SEN"); 
         }
     
     | COS OP Rpn_expression CP 
         {   
-            rpn = stack_push(rpn,"COS"); 
+            rpn_string = concat_strings(rpn_string,"COS"); 
         }
     | TAN OP Rpn_expression CP 
         {   
-            rpn = stack_push(rpn,"TAN"); 
+            rpn_string = concat_strings(rpn_string,"TAN");  
         }
+;
 //------------- END RPN
 Integrate: INTEGRATE OP Factor INTERVAL Factor COMMA Function CP SEMI END_INPUT {printf("INTEGRATE\n"); return 0;}; 
 
@@ -475,10 +494,18 @@ About: ABOUT SEMI END_INPUT {print_about(); return 0;};
 
 
 int main(int argc, char** argv){ 
+    exp_str_last = malloc(sizeof(char*));
     while (1) {
+        rpn_string = malloc(sizeof(char*));
+        exp_str = malloc(sizeof(char*));
         printf("> ");
         yyparse();
     } 
+
+    
+    free(rpn_string);
+    free(exp_str);
+    free(exp_str_last);
 	return 0;
 }
 
@@ -497,15 +524,20 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
-char* to_string(float value){
-    // Determine the maximum size needed for the string
-    int size = snprintf(NULL, 0, "%f", value);
 
-    // Allocate memory for the string
-    char* result = (char*)malloc(size + 1);  // +1 for the null terminator
+char* concat_strings(const char* str1, const char* str2) {
 
-    // Convert float to string
-    snprintf(result, size + 1, "%f", value);
+    size_t size = strlen(str1) + strlen(str2) + 2;
+
+    char* result = (char*)malloc(size);
+    if (!result) {
+        // Tratamento de erro se a alocação falhar
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(result, str1);
+    strcat(result, " ");// space between str1 and str2
+    strcat(result, str2);
 
     return result;
 }

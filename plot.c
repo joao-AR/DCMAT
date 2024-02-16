@@ -46,6 +46,18 @@ void plot_print(){
     printf("\n\n");
 }
 
+char* to_string(float value){
+    // Determine the maximum size needed for the string
+    int size = snprintf(NULL, 0, "%f", value);
+
+    // Allocate memory for the string
+    char* result = (char*)malloc(size + 1);  // +1 for the null terminator
+
+    // Convert float to string
+    snprintf(result, size + 1, "%f", value);
+
+    return result;
+}
 
 void plot_manipulation(float h_view_lo,float h_view_hi,float v_view_lo,float v_view_hi,char* type_func,float exp_result){
 
