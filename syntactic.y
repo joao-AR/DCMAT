@@ -18,8 +18,8 @@
 	extern int current_char_index;
     // END From lex.l
 
-    float pi = 3.14159265;
-    float e = 2.71828182;
+    extern float pi;
+    extern float e;
 
     //From Settings
     extern float h_view_lo;
@@ -129,6 +129,7 @@ first:
     | Attr_val_matrix
     | Expression END_INPUT
         {   
+            
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
             
@@ -356,22 +357,19 @@ Factor:
 Plot_last: 
     PLOT SEMI END_INPUT
         {   
-            printf("%s)",exp_str_last);
-            // if(function_difined == 0){
-            //     plot_config(draw_axis,erease_plot);
-            //     plot_manipulation(h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
-            // }else{
-            //     printf("\nNo Function defined!\n");
-            // }
+            if(strlen(exp_str_last) > 0){
+                plot_func(exp_str_last);
+            }else{
+                printf("\nNo Function defined!\n");
+            }
             return 0;
         }
 ;
 
 Plot: 
-    PLOT OP Function CP SEMI END_INPUT
+    PLOT OP Expression CP SEMI END_INPUT
         {   
-            plot_config(draw_axis,erease_plot);
-            plot_manipulation(h_view_lo,h_view_hi,v_view_lo,v_view_hi,type_func,exp_result);
+            plot_func(exp_str);
             return 0;
         } 
 ;

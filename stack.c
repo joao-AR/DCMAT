@@ -3,7 +3,7 @@
 
 #include "stack.h" 
 
-Stack_node* stack_push(Stack_node *top, char* value){
+Stack_node* stack_push(Stack_node *top, float value){
     Stack_node *new_rpn = malloc(sizeof(Stack_node));
 
     if(new_rpn){
@@ -21,8 +21,6 @@ Stack_node* stack_pop(Stack_node **top){
         Stack_node *remove = *top;
         *top = remove->next;
         return remove;
-    }else{
-        printf("Pilha vazia\n");
     }
     return NULL;
 }
@@ -30,7 +28,7 @@ Stack_node* stack_pop(Stack_node **top){
 
 void stack_print(Stack_node *top){
         while(top){
-            printf("%s ",top->value);
+            printf("%f ",top->value);
             top = top->next;
         }
 } 
@@ -49,7 +47,7 @@ void stack_reverse_print(Stack_node *top) {
 
     // Pop and print values aux Stack
     while (aux_stack) {
-        printf("%s ", aux_stack->value);
+        printf("%f ", aux_stack->value);
         Stack_node *temp = aux_stack;
         aux_stack = aux_stack->next;
         free(temp);
