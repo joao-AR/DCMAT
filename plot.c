@@ -79,12 +79,19 @@ float calc_values(float n1,float n2, char* op){
     float result = 0;
     if(strcmp(op,"+") == 0){
         result = n1 + n2;
+        // printf("\n%f + %f = %f\n",n1,n2,result);
     }else if(strcmp(op,"-") == 0){
         result = n1 - n2;
     }else if(strcmp(op,"*") == 0){
         result = n1 * n2;
+        // printf("\n%f * %f = %f\n",n1,n2,result);
     }else if(strcmp(op,"/") == 0){
         result = n1 / n2;
+    }else if(strcmp(op,"^") == 0){
+        result = pow(n1,n2);
+        // printf("\npow(%f,%f) = %f\n",n1,n2,result);
+    }else if(strcmp(op,"%%") == 0){
+        result =  fmod(n1,n2);
     }else if(strcmp(op, "SEN") == 0){
         result = sin(n2 );
     }else if(strcmp(op, "COS") == 0){
@@ -102,10 +109,12 @@ float calc_rpn (char *expression,int j){
 
     expression = strtok(expression," ");
     while(expression){
-        if( strcmp(expression, "+") == 0 || strcmp(expression, "-") == 0 
-        || strcmp(expression, "*") == 0 || strcmp(expression, "/") == 0){
+        if(strcmp(expression, "+") == 0 || strcmp(expression, "-") == 0 
+        || strcmp(expression, "*") == 0 || strcmp(expression, "/") == 0
+        || strcmp(expression, "^") == 0 || strcmp(expression, "%%") == 0
+        ){
             n1 = stack_pop(&stack);
-            n2 = stack_pop(&stack);
+            n2 = stack_pop(&stack); 
             num = calc_values(n2->value,n1->value,expression);
             stack = stack_push(stack,num);
             free(n1);
@@ -119,7 +128,7 @@ float calc_rpn (char *expression,int j){
             num = h_view_lo + j * (h_view_hi - h_view_lo) / 79; // 79 = 80 - 1
             stack = stack_push(stack,num);
         }else{
-            num = strtol(expression,NULL,10);
+            num = atof(expression);
             stack = stack_push(stack,num);
         }
         expression = strtok(NULL," ");

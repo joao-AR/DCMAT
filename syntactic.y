@@ -37,9 +37,6 @@
     extern char plot;
     
     //Custom VAR
-    char* type_func;
-    float exp_result = 0;
-    int function_difined = 1; // 0 = True 1 = False 
     char* aux_string;
     char* rpn_string;
     char* exp_str;
@@ -51,6 +48,7 @@
 
     // Custom Functions
     void print_about();
+    void riemann_sum(float inf,float sup,char *expression);
     char* concat_strings(const char* str1, const char* str2);
     char* to_string(float value);
 
@@ -319,26 +317,17 @@ Expression:
 Function: 
     SEN OP Expression CP 
         {   
-            function_difined = 0;
-            exp_result = $3;
-            type_func = "sin";
             exp_str = concat_strings(exp_str,"SEN"); 
             $$ = sin($3 * pi / 180); // Convert degress to radians
         }
     
     | COS OP Expression CP 
-        {   
-            function_difined = 0;
-            exp_result = $3;
-            type_func = "cos";
+        { 
             exp_str = concat_strings(exp_str,"COS"); 
             $$ = cos($3 * pi / 180); // Convert degress to radians
         }
     | TAN OP Expression CP 
         {   
-            function_difined = 0;
-            exp_result = $3;
-            type_func = "tan";
             exp_str = concat_strings(exp_str,"TAN"); 
             $$ = tan($3 * pi / 180); // Convert degress to radians
         }
@@ -458,7 +447,13 @@ Rpn_func:
         }
 ;
 //------------- END RPN
-Integrate: INTEGRATE OP Factor INTERVAL Factor COMMA Function CP SEMI END_INPUT {printf("INTEGRATE\n"); return 0;}; 
+Integrate: 
+    INTEGRATE OP Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT 
+        {   
+            riemann_sum($3,$5,exp_str);
+            return 0;
+        }
+; 
 
 Sum: SUM OP VAR COMMA Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT {printf("SOMATORIO\n"); return 0;}; 
 
@@ -479,15 +474,33 @@ Solve_determinant: SOLVE DETERMINANT SEMI END_INPUT{printf("SOLVE DETERMINANT\n"
 
 Solve_linear_system: SOLVE LINEAR_SYSTEM SEMI END_INPUT{printf("SOLVE linear SYSTEM\n"); return 0;}
 
-Attr_val_simb: VAR ATRI Expression END_INPUT {printf("varaivel := expressao\n"); return 0;};
+Attr_val_simb: 
+    VAR ATRI Expression SEMI END_INPUT 
+        {
+            printf("%s := %f;\n",$1,$3); 
+            return 0;
+        }
+;
 
-Attr_val_matrix: VAR ATRI Matrix END_INPUT{printf("varaivel := matrix\n"); return 0;};
+Attr_val_matrix: 
+    VAR ATRI Matrix END_INPUT
+        {
+            printf("varaivel := matrix\n"); 
+            return 0;
+        }
+;
 
 Show_var: VAR SEMI END_INPUT{printf("variavel; \n"); return 0;};
 
 Show_all_var: SHOW SYMBOLS SEMI END_INPUT{printf("show symbols;\n"); return 0;};
 
-About: ABOUT SEMI END_INPUT {print_about(); return 0;};
+About: 
+    ABOUT SEMI END_INPUT 
+        {
+            print_about(); 
+            return 0;
+        }
+;
 %%
 
 
@@ -510,8 +523,13 @@ int main(int argc, char** argv){
 void yyerror(char const *s){
     int i;
 	char c;
+    if(strcmp(yytext,"\n")==0 || strcmp(yytext,"")==0){
+        printf("SYNTAX ERROR: Incomplete command\n");
 
-    printf("error:syntax: %s\n", yytext);
+    }else{
+        printf("SYNTAX ERROR: [%s]\n", yytext);
+    }
+    return;
 }
 
 
@@ -538,4 +556,58 @@ char* concat_strings(const char* str1, const char* str2) {
     strcat(result, str2);
 
     return result;
+}
+
+float calc_f_of_x(float x,char *expression){
+
+    float num;
+    Stack_node *n1,*n2, *stack = NULL; 
+
+    expression = strtok(expression," ");
+    while(expression){
+        if(strcmp(expression, "+") == 0 || strcmp(expression, "-") == 0 
+        || strcmp(expression, "*") == 0 || strcmp(expression, "/") == 0
+        || strcmp(expression, "^") == 0 || strcmp(expression, "%%") == 0){
+            n1 = stack_pop(&stack);
+            n2 = stack_pop(&stack); 
+            num = calc_values(n2->value,n1->value,expression);
+            stack = stack_push(stack,num);
+            free(n1);
+            free(n2);
+        }else if(strcmp(expression, "SEN") == 0 || strcmp(expression, "COS") == 0 || strcmp(expression, "TAN") == 0){
+            n1 = stack_pop(&stack);
+            num = calc_values(0,n1->value,expression);
+            stack = stack_push(stack,num);
+            free(n1);
+        }else if(strcmp(expression, "x") == 0 ){
+            num = x;
+            stack = stack_push(stack,num);
+        }else{
+            num = atof(expression);
+            stack = stack_push(stack,num);
+        }
+        expression = strtok(NULL," ");
+    }
+    
+    return num;
+}
+
+void riemann_sum(float inf,float sup,char *expression){
+    float delta_x = (sup - inf) / integral_steps;
+    float result = 0;
+    float mp = 0; // median point
+    
+    size_t len =  strlen(expression);
+    char *exp = (char*)malloc(len+1);
+
+    strcpy(exp,expression);
+
+    for(float i = inf ; i < sup; i = i + delta_x ){
+        mp = (i + (i+delta_x))/2;
+        result = result + calc_f_of_x(mp,exp);
+        strcpy(exp,expression);
+    }
+    result = delta_x * result;
+    free(exp);
+    printf("%f\n",result);
 }
