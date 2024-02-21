@@ -72,7 +72,7 @@ void plot_func(char* expression){
         for(int j = 0; j < 80; j++){
 
             float x_val = h_view_lo + j * (h_view_hi - h_view_lo) / 79; // 79 = 80 - 1
-            float calc_val = calc_rpn(x_val,exp) * -1;
+            float calc_val = calc_rpn(x_val,exp,"x") * -1;
             float y_val = v_view_lo + i * (v_view_hi - v_view_lo) / 24; // 24 = 24 - 1 
             strcpy(exp,expression);
 

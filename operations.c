@@ -82,7 +82,7 @@ bool is_operation_or_function(char* string, int type){
     return false;
 }
 
-float calc_rpn (float x,char *expression){
+float calc_rpn (float x,char *expression,char* var){
     /* printf("xis = %f\n",x); */
     float num;
     Stack_node *n1,*n2, *stack = NULL; 
@@ -103,7 +103,7 @@ float calc_rpn (float x,char *expression){
             stack = stack_push(stack,num);
             free(n1);
 
-        }else if(strcmp(expression, "x") == 0 ){
+        }else if(strcmp(expression, var) == 0 ){
             num = x;
             stack = stack_push(stack,num);
         }else{
@@ -119,7 +119,7 @@ float calc_rpn (float x,char *expression){
 void riemann_sum(float inf,float sup,char *expression){
     float delta_x = (sup - inf) / integral_steps;
     float result = 0.0;
-    float mp = 0.0; // median point
+    float x_i = 0.0; // median point
     
     size_t len =  strlen(expression);
     char *exp = (char*)malloc(len+1);
@@ -127,9 +127,9 @@ void riemann_sum(float inf,float sup,char *expression){
     strcpy(exp,expression);
 
     for(int i = 0 ; i < integral_steps; i++ ){
-        mp = inf + i * delta_x;
+        x_i = inf + i * delta_x;
         
-        result += calc_rpn(mp,exp);
+        result += calc_rpn(x_i,exp,"x");
         strcpy(exp,expression);
     }
     result =  result * delta_x;
@@ -140,20 +140,20 @@ void riemann_sum(float inf,float sup,char *expression){
 
 
 
-/* void sum(char *var, int inf, int sup, char *expression){ */
-    /* size_t len =  strlen(expression);
+void sum(char *var, int inf, int sup, char *expression){ 
+    size_t len =  strlen(expression);
     char *exp = (char*)malloc(len+1);
-    float result = 0;
+    double result = 0.0;
     strcpy(exp,expression);
 
-    for(int i = inf; i < sup; i++){
-        result = result + calc_f_of_x(i,exp);
+    for(int i = inf; i <= sup; i++){
+        result += calc_rpn(i,exp,var);
         strcpy(exp,expression);
     }
 
     free(exp);
-    printf("%f",result); */
-/* } */
+    print_value(result);
+} 
 
 
 // ---------- Strings Operations

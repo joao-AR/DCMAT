@@ -57,8 +57,8 @@
     char *sval;
 }
 
-%type <dval> Expression Factor Function
-%type <sval> Rpn_expression Rpn_func Rpn_term
+%type <dval> Expression Factor Function 
+%type <sval> Rpn_expression Rpn_func Rpn_term Sum
 %locations
 %define parse.lac full
 %define parse.error verbose
@@ -142,7 +142,7 @@ first:
     | Plot 
     | Matrix 
     | Integrate 
-    | Sum
+    | Sum 
     | Rpn 
         { 
             free(rpn_string); 
@@ -246,7 +246,11 @@ Set_float_precision:
 //------------- Expressions 
 
 Expression:
-    Function
+    VAR
+        {   
+            exp_str = concat_strings(exp_str,$1);
+        }
+    |Function
     |Factor 
         {
             $$ = $1; 
@@ -255,7 +259,6 @@ Expression:
         }
     |X 
         {
-            $$ = h_view_lo;
             exp_str = concat_strings(exp_str,"x");
         }
     |PI 
@@ -363,6 +366,7 @@ Plot:
 //------------- END PLOT
 
 //------------- RPN
+
 Rpn: RPN OP Rpn_expression CP SEMI END_INPUT 
     {   
         printf("%s\n",rpn_string);
@@ -444,7 +448,9 @@ Rpn_func:
             rpn_string = concat_strings(rpn_string,"TAN");  
         }
 ;
+
 //------------- END RPN
+
 Integrate: 
     INTEGRATE OP Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT 
         {   
@@ -454,10 +460,9 @@ Integrate:
 ; 
 
 Sum: 
-    SUM OP VAR COMMA INTEGER INTERVAL INTEGER COMMA Expression CP SEMI END_INPUT 
+    SUM OP VAR COMMA INTEGER INTERVAL INTEGER COMMA Expression CP SEMI END_INPUT
         {   
-            // sum(char *var, int inf, int sup, char *expression);
-            printf("SOMATORIO\n"); 
+            sum($3, $5,$7,exp_str);
             return 0;
         }
 ; 
@@ -518,7 +523,6 @@ int main(int argc, char** argv){
         yyparse();
     } 
 
-    
     free(rpn_string);
     free(exp_str);
     free(exp_str_last);
