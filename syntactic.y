@@ -7,6 +7,7 @@
     #include "settings.h"
     #include "plot.h"
     #include "stack.h"
+    #include "operations.h"
     
     // From lex.l
 	extern char* yytext;
@@ -48,9 +49,6 @@
 
     // Custom Functions
     void print_about();
-    void riemann_sum(float inf,float sup,char *expression);
-    char* concat_strings(const char* str1, const char* str2);
-    char* to_string(float value);
 
 %}
 
@@ -132,7 +130,7 @@ first:
             free(exp_str); 
             
             exp_str = malloc(sizeof(char*));
-            printf("%f\n",$1); 
+            print_value($1);
             return 0;
         } 
     | Show_Settings 
@@ -455,7 +453,14 @@ Integrate:
         }
 ; 
 
-Sum: SUM OP VAR COMMA Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT {printf("SOMATORIO\n"); return 0;}; 
+Sum: 
+    SUM OP VAR COMMA INTEGER INTERVAL INTEGER COMMA Expression CP SEMI END_INPUT 
+        {   
+            // sum(char *var, int inf, int sup, char *expression);
+            printf("SOMATORIO\n"); 
+            return 0;
+        }
+; 
 
 Matrix: 
     OB INTEGER Matrix_Value CB SEMI END_INPUT{printf("matrix[%f]",$2); return 0;}
@@ -529,7 +534,7 @@ void yyerror(char const *s){
     }else{
         printf("SYNTAX ERROR: [%s]\n", yytext);
     }
-    return;
+    return ;
 }
 
 
@@ -540,74 +545,3 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
-
-char* concat_strings(const char* str1, const char* str2) {
-
-    size_t size = strlen(str1) + strlen(str2) + 2;
-
-    char* result = (char*)malloc(size);
-    if (!result) {
-        // Tratamento de erro se a alocação falhar
-        exit(EXIT_FAILURE);
-    }
-
-    strcpy(result, str1);
-    strcat(result, " ");// space between str1 and str2
-    strcat(result, str2);
-
-    return result;
-}
-
-float calc_f_of_x(float x,char *expression){
-
-    float num;
-    Stack_node *n1,*n2, *stack = NULL; 
-
-    expression = strtok(expression," ");
-    while(expression){
-        if(strcmp(expression, "+") == 0 || strcmp(expression, "-") == 0 
-        || strcmp(expression, "*") == 0 || strcmp(expression, "/") == 0
-        || strcmp(expression, "^") == 0 || strcmp(expression, "%%") == 0){
-            n1 = stack_pop(&stack);
-            n2 = stack_pop(&stack); 
-            num = calc_values(n2->value,n1->value,expression);
-            stack = stack_push(stack,num);
-            free(n1);
-            free(n2);
-        }else if(strcmp(expression, "SEN") == 0 || strcmp(expression, "COS") == 0 || strcmp(expression, "TAN") == 0){
-            n1 = stack_pop(&stack);
-            num = calc_values(0,n1->value,expression);
-            stack = stack_push(stack,num);
-            free(n1);
-        }else if(strcmp(expression, "x") == 0 ){
-            num = x;
-            stack = stack_push(stack,num);
-        }else{
-            num = atof(expression);
-            stack = stack_push(stack,num);
-        }
-        expression = strtok(NULL," ");
-    }
-    
-    return num;
-}
-
-void riemann_sum(float inf,float sup,char *expression){
-    float delta_x = (sup - inf) / integral_steps;
-    float result = 0;
-    float mp = 0; // median point
-    
-    size_t len =  strlen(expression);
-    char *exp = (char*)malloc(len+1);
-
-    strcpy(exp,expression);
-
-    for(float i = inf ; i < sup; i = i + delta_x ){
-        mp = (i + (i+delta_x))/2;
-        result = result + calc_f_of_x(mp,exp);
-        strcpy(exp,expression);
-    }
-    result = delta_x * result;
-    free(exp);
-    printf("%f\n",result);
-}
