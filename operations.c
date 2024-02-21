@@ -6,6 +6,7 @@
 
 #include "stack.h"
 
+extern int pi;
 //From Settings
     extern float h_view_lo;
     extern float h_view_hi; 
@@ -57,7 +58,8 @@ float calc_values(float n1,float n2, char* op){
         result =  fmod(n1,n2);
     }else if(strcmp(op, "SEN") == 0){
         result = sin(n2);
-        // printf("\n sin(%f) = %f\n",n2,result);
+        // printf("-> Result sin(%f) = %f\n",n2,result);
+
     }else if(strcmp(op, "COS") == 0){
         result = cos(n2);
     }else if(strcmp(op, "TAN") == 0){
@@ -117,21 +119,21 @@ float calc_rpn (float x,char *expression){
 
 void riemann_sum(float inf,float sup,char *expression){
     float delta_x = (sup - inf) / integral_steps;
-    float result = 0;
-    float mp = 0; // median point
+    float result = 0.0;
+    float mp = 0.0; // median point
     
     size_t len =  strlen(expression);
     char *exp = (char*)malloc(len+1);
 
     strcpy(exp,expression);
 
-    for(float i = inf ; i < sup; i = i + delta_x ){
-        /* printf("i = %f\n",i); */
-        mp = (i + (i+delta_x))/2;
-        result = result + calc_rpn(mp,exp);
+    for(int i = 0 ; i < integral_steps; i++ ){
+        mp = inf + i * delta_x;
+        
+        result += calc_rpn(mp,exp);
         strcpy(exp,expression);
     }
-    result = delta_x * result;
+    result =  result * delta_x;
     free(exp);
     printf("%f\n",result);
 }
