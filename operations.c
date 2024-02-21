@@ -6,7 +6,6 @@
 
 #include "stack.h"
 
-extern int pi;
 //From Settings
     extern float h_view_lo;
     extern float h_view_hi; 
