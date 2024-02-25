@@ -42,6 +42,10 @@
     char* rpn_string;
     char* exp_str;
     char* exp_str_last; // Used to save the last expression, plot;
+    char* mtx_string; 
+    int mtx_lines = 1 ;  // Matrix Lines
+    int mtx_columns = 0; // Matrix Columns
+    int g_mtx_columns = 1;// Greater Matrix Columns
 	//End Custom VAR
     
     extern int yylex();
@@ -140,7 +144,14 @@ first:
     | Set_Erase_Plot
     | Plot_last 
     | Plot 
-    | Matrix 
+    | Matrix
+        {   
+            printf("mtx[%d][%d]\n",mtx_lines,g_mtx_columns);
+            printf("str: %s\n",mtx_string);
+            free(mtx_string); 
+            mtx_string = malloc(sizeof(char*));
+            return 0;
+        }
     | Integrate 
     | Sum 
     | Rpn 
@@ -467,14 +478,66 @@ Sum:
         }
 ; 
 
-Matrix: 
-    OB INTEGER Matrix_Value CB SEMI END_INPUT{printf("matrix[%f]",$2); return 0;}
-    |OB INTEGER Matrix_Value CB COMMA OB INTEGER Matrix_Value CB SEMI END_INPUT{printf("matrix[%f][%f]",$2,$7); return 0;}
+Matrix:
+    MATRIX EQUAL OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT 
+        {   
+            if(mtx_columns > g_mtx_columns){
+                g_mtx_columns = mtx_columns;
+            } 
+        }
+    
+    |MATRIX EQUAL OB OB  Matrix_column CB CB SEMI END_INPUT 
+        {   
+            if(mtx_columns > g_mtx_columns){
+                g_mtx_columns = mtx_columns;
+            } 
+        }
+
 ;
 
-Matrix_Value: 
-    %empty 
-    | COMMA INTEGER Matrix_Value
+Matrix_line: 
+    { mtx_string = concat_strings(mtx_string, "|");   }
+    COMMA OB Matrix_column CB 
+        {   
+            mtx_string = concat_strings(mtx_string, "|");
+            mtx_lines++;
+        }
+    | Matrix_line COMMA OB  Matrix_column CB 
+        {   
+            mtx_string = concat_strings(mtx_string, "|");
+            mtx_lines++;
+        }
+;
+
+Matrix_column: 
+    Matrix_value 
+        { 
+            if(mtx_columns > g_mtx_columns){
+                g_mtx_columns = mtx_columns;
+            } 
+            mtx_columns = 0;
+        }
+;
+
+Matrix_value:
+    COMMA Factor 
+        {      
+            aux_string = to_string($2);
+            mtx_string = concat_strings(mtx_string, aux_string);
+            mtx_columns++;
+        }
+    | Matrix_value COMMA Factor 
+        {   
+            aux_string = to_string($3);
+            mtx_string = concat_strings(mtx_string, aux_string);
+            mtx_columns++;
+        }
+    | Factor
+    {
+        aux_string = to_string($1);
+        mtx_string = concat_strings(mtx_string, aux_string);
+        mtx_columns++;
+    }
 ;
 
 Show_matrix: SHOW MATRIX SEMI END_INPUT{printf("SHOW MATRIX\n"); return 0;}
@@ -519,6 +582,7 @@ int main(int argc, char** argv){
     while (1) {
         rpn_string = malloc(sizeof(char*));
         exp_str = malloc(sizeof(char*));
+        mtx_string = malloc(sizeof(char*));
         printf("> ");
         yyparse();
     } 
@@ -526,19 +590,20 @@ int main(int argc, char** argv){
     free(rpn_string);
     free(exp_str);
     free(exp_str_last);
+    free(mtx_string);
 	return 0;
 }
 
 void yyerror(char const *s){
     int i;
 	char c;
-    if(strcmp(yytext,"\n")==0 || strcmp(yytext,"")==0){
+    if(strcmp(yytext,"\n")==0 || strcmp(yytext," ")==0){
         printf("SYNTAX ERROR: Incomplete command\n");
 
     }else{
         printf("SYNTAX ERROR: [%s]\n", yytext);
     }
-    return ;
+    return;
 }
 
 
