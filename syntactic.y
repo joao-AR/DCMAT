@@ -53,6 +53,7 @@
 
     // Custom Functions
     void print_about();
+    void new_matrix(char* mtx_str, int lines, int columns);
 
 %}
 
@@ -146,8 +147,8 @@ first:
     | Plot 
     | Matrix
         {   
-            printf("mtx[%d][%d]\n",mtx_lines,g_mtx_columns);
-            printf("str: %s\n",mtx_string);
+
+            new_matrix(mtx_string,mtx_lines,g_mtx_columns);
             free(mtx_string); 
             mtx_string = malloc(sizeof(char*));
             return 0;
@@ -614,3 +615,39 @@ void print_about(){
     printf("+----------------------------------------------+\n");
 }
 
+
+void new_matrix(char* mtx_str, int lines, int columns) {
+    double mtx[lines][columns];
+
+    int i = 0;
+    int j = 0;
+
+    char* token = strtok(mtx_str, " ");
+
+    while (token) {
+        if (strcmp(token, "|") == 0) { // new line
+            if (i < columns) {
+                while (i < columns) {
+                    mtx[j][i] = 0;
+                    i++;
+                }
+            }
+            j++;
+            i = 0; // Reset i for the new line
+        } else {
+            if (j < lines && i < columns) {
+                mtx[j][i] = strtod(token, NULL);
+                i++;
+            }
+        }
+        token = strtok(NULL, " ");
+    }
+
+    // Print the matrix
+    for (int l = 0; l < lines; l++) {
+        for (int m = 0; m < columns; m++) {
+            printf("%lf ", mtx[l][m]);
+        }
+        printf("\n");
+    }
+}
