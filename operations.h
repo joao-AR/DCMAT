@@ -1,5 +1,10 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
+    typedef struct matrix{
+        double** data;
+        int rows;
+        int cols;
+    } Matrix;
 
     //Math functions
     void print_value(float num);
@@ -8,6 +13,11 @@
     float calc_rpn (float x,char *expression,char* var);
     void sum(char *var, int inf, int sup, char *expression);
 
+    // Matrix
+        Matrix new_matrix( int rows, int cols);
+        void free_matrix(Matrix* mtx);
+        void populate_matrix(Matrix* mtx, char* mtx_str);
+        void print_matrix(const Matrix* mtx);
     //Strings
     char* concat_strings(const char* str1, const char* str2);
     char* to_string(float value);

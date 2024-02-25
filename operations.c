@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "stack.h"
+#include "operations.h"
 
 //From Settings
     extern float h_view_lo;
@@ -154,6 +155,64 @@ void sum(char *var, int inf, int sup, char *expression){
     free(exp);
     print_value(result);
 } 
+
+// --------- Matrix
+
+Matrix new_matrix(int rows, int cols) {
+    Matrix mtx;
+    mtx.rows = rows;
+    mtx.cols = cols;
+
+    mtx.data = (double**) malloc(rows * sizeof(double*));
+    for(int i = 0; i < rows; i++){
+        mtx.data[i] = (double*)malloc(cols * sizeof(double));
+    }
+
+    return mtx;
+}
+
+// Function to free the memory allocated for a matrix
+void free_matrix(Matrix* mtx) {
+    for (int i = 0; i < mtx->rows; i++) {
+        free(mtx->data[i]);
+    }
+    free(mtx->data);
+    mtx->data = NULL;
+    mtx->rows = 0;
+    mtx->cols = 0;
+}
+
+// Function to populate a matrix structure from a string
+void populate_matrix(Matrix* mtx, char* mtx_str) {
+    int i = 0;
+    int j = 0;
+
+    char* token = strtok(mtx_str, " ");
+
+    while (token) {
+        if (strcmp(token, "|") == 0) {
+            j++;
+            i = 0;
+        } else {
+            if (j < mtx->rows && i < mtx->cols) {
+                mtx->data[j][i] = strtod(token, NULL);
+                i++;
+            }
+        }
+        token = strtok(NULL, " ");
+    }
+}
+
+// Function to print the matrix
+void print_matrix(const Matrix* mtx) {
+    
+    for (int l = 0; l < mtx->rows; l++) {
+        for (int m = 0; m < mtx->cols; m++) {
+            printf("%12.8lf ", mtx->data[l][m]);
+        }
+        printf("\n");
+    }
+}
 
 
 // ---------- Strings Operations

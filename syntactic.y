@@ -43,6 +43,7 @@
     char* exp_str;
     char* exp_str_last; // Used to save the last expression, plot;
     
+    Matrix mtx;
     char* mtx_str; 
     int mtx_rows = 1 ;  // Matrix Lines
     int mtx_columns = 0; // Matrix Columns
@@ -148,13 +149,14 @@ first:
     | Plot 
     | Matrix
         {   
-
-            Matrix mtx = new_matrix(mtx_rows,g_mtx_cols);
-            populate_matrix(&mtx, mtx_str);
-            print_matrix(&mtx);
             free_matrix(&mtx);
+            mtx = new_matrix(mtx_rows,g_mtx_cols);
+            populate_matrix(&mtx, mtx_str);
             free(mtx_str); 
             mtx_str = malloc(sizeof(char*));
+            g_mtx_cols = 1;
+            mtx_rows = 1;
+            mtx_columns = 0;
             return 0;
         }
     | Integrate 
@@ -165,7 +167,7 @@ first:
             rpn_string = malloc(sizeof(char*));
         }
     | Set_integral_steps 
-    | Show_matrix
+    | Show_matrix 
     | About 
     | Solve_determinant
     | Solve_linear_system
@@ -545,7 +547,12 @@ Matrix_value:
     }
 ;
 
-Show_matrix: SHOW MATRIX SEMI END_INPUT{printf("SHOW MATRIX\n"); return 0;}
+Show_matrix: SHOW MATRIX SEMI END_INPUT 
+    {   
+        printf("\n");
+        print_matrix(&mtx);
+        return 0;
+    }
 ;
 
 Solve_determinant: SOLVE DETERMINANT SEMI END_INPUT{printf("SOLVE DETERMINANT\n"); return 0;}
@@ -596,6 +603,7 @@ int main(int argc, char** argv){
     free(exp_str);
     free(exp_str_last);
     free(mtx_str);
+    free_matrix(&mtx);
 	return 0;
 }
 
