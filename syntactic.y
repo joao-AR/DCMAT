@@ -42,10 +42,11 @@
     char* rpn_string;
     char* exp_str;
     char* exp_str_last; // Used to save the last expression, plot;
-    char* mtx_string; 
-    int mtx_lines = 1 ;  // Matrix Lines
+    
+    char* mtx_str; 
+    int mtx_rows = 1 ;  // Matrix Lines
     int mtx_columns = 0; // Matrix Columns
-    int g_mtx_columns = 1;// Greater Matrix Columns
+    int g_mtx_cols = 1;// Greater Matrix Columns
 	//End Custom VAR
     
     extern int yylex();
@@ -53,7 +54,7 @@
 
     // Custom Functions
     void print_about();
-    void new_matrix(char* mtx_str, int lines, int columns);
+
 
 %}
 
@@ -148,9 +149,12 @@ first:
     | Matrix
         {   
 
-            new_matrix(mtx_string,mtx_lines,g_mtx_columns);
-            free(mtx_string); 
-            mtx_string = malloc(sizeof(char*));
+            Matrix mtx = new_matrix(mtx_rows,g_mtx_cols);
+            populate_matrix(&mtx, mtx_str);
+            print_matrix(&mtx);
+            free_matrix(&mtx);
+            free(mtx_str); 
+            mtx_str = malloc(sizeof(char*));
             return 0;
         }
     | Integrate 
@@ -482,39 +486,39 @@ Sum:
 Matrix:
     MATRIX EQUAL OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT 
         {   
-            if(mtx_columns > g_mtx_columns){
-                g_mtx_columns = mtx_columns;
+            if(mtx_columns > g_mtx_cols){
+                g_mtx_cols = mtx_columns;
             } 
         }
     
     |MATRIX EQUAL OB OB  Matrix_column CB CB SEMI END_INPUT 
         {   
-            if(mtx_columns > g_mtx_columns){
-                g_mtx_columns = mtx_columns;
+            if(mtx_columns > g_mtx_cols){
+                g_mtx_cols = mtx_columns;
             } 
         }
 
 ;
 
 Matrix_line: 
-    { mtx_string = concat_strings(mtx_string, "|");   }
+    { mtx_str = concat_strings(mtx_str, "|");   }
     COMMA OB Matrix_column CB 
         {   
-            mtx_string = concat_strings(mtx_string, "|");
-            mtx_lines++;
+            mtx_str = concat_strings(mtx_str, "|");
+            mtx_rows++;
         }
     | Matrix_line COMMA OB  Matrix_column CB 
         {   
-            mtx_string = concat_strings(mtx_string, "|");
-            mtx_lines++;
+            mtx_str = concat_strings(mtx_str, "|");
+            mtx_rows++;
         }
 ;
 
 Matrix_column: 
     Matrix_value 
         { 
-            if(mtx_columns > g_mtx_columns){
-                g_mtx_columns = mtx_columns;
+            if(mtx_columns > g_mtx_cols){
+                g_mtx_cols = mtx_columns;
             } 
             mtx_columns = 0;
         }
@@ -524,19 +528,19 @@ Matrix_value:
     COMMA Factor 
         {      
             aux_string = to_string($2);
-            mtx_string = concat_strings(mtx_string, aux_string);
+            mtx_str = concat_strings(mtx_str, aux_string);
             mtx_columns++;
         }
     | Matrix_value COMMA Factor 
         {   
             aux_string = to_string($3);
-            mtx_string = concat_strings(mtx_string, aux_string);
+            mtx_str = concat_strings(mtx_str, aux_string);
             mtx_columns++;
         }
     | Factor
     {
         aux_string = to_string($1);
-        mtx_string = concat_strings(mtx_string, aux_string);
+        mtx_str = concat_strings(mtx_str, aux_string);
         mtx_columns++;
     }
 ;
@@ -583,7 +587,7 @@ int main(int argc, char** argv){
     while (1) {
         rpn_string = malloc(sizeof(char*));
         exp_str = malloc(sizeof(char*));
-        mtx_string = malloc(sizeof(char*));
+        mtx_str = malloc(sizeof(char*));
         printf("> ");
         yyparse();
     } 
@@ -591,7 +595,7 @@ int main(int argc, char** argv){
     free(rpn_string);
     free(exp_str);
     free(exp_str_last);
-    free(mtx_string);
+    free(mtx_str);
 	return 0;
 }
 
@@ -616,38 +620,4 @@ void print_about(){
 }
 
 
-void new_matrix(char* mtx_str, int lines, int columns) {
-    double mtx[lines][columns];
 
-    int i = 0;
-    int j = 0;
-
-    char* token = strtok(mtx_str, " ");
-
-    while (token) {
-        if (strcmp(token, "|") == 0) { // new line
-            if (i < columns) {
-                while (i < columns) {
-                    mtx[j][i] = 0;
-                    i++;
-                }
-            }
-            j++;
-            i = 0; // Reset i for the new line
-        } else {
-            if (j < lines && i < columns) {
-                mtx[j][i] = strtod(token, NULL);
-                i++;
-            }
-        }
-        token = strtok(NULL, " ");
-    }
-
-    // Print the matrix
-    for (int l = 0; l < lines; l++) {
-        for (int m = 0; m < columns; m++) {
-            printf("%lf ", mtx[l][m]);
-        }
-        printf("\n");
-    }
-}
