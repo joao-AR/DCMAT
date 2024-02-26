@@ -618,12 +618,10 @@ Solve_determinant:
             printf("No Matrix Defined!\n");
         }else{
             printf("\n");
-            // if(mtx.rows != mtx.cols){
-            //     printf("Matrix format incorrect!");
-            // }else{
-                det_res = solve_determinant(mtx, mtx.rows);
-                print_value(det_res);
-            // }
+            
+            det_res = solve_determinant(mtx, mtx.rows);
+            print_value(det_res);
+
         }
         return 0;
     }

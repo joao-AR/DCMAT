@@ -236,7 +236,7 @@ void submatrix(Matrix mtx, Matrix *temp ,int p, int q, int n){
 double solve_determinant(Matrix mtx, int n){ 
 
     if (mtx.cols != mtx.rows) {
-        printf("NON SQUARE MATRIX\n");
+        printf("Matrix format incorrect!\n");
         return 0;
     }
 
