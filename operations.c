@@ -215,6 +215,52 @@ void print_matrix(const Matrix* mtx) {
 }
 
 
+// ---------- Solve Determiant
+void submatrix(Matrix mtx, Matrix *temp ,int p, int q, int n){
+    int i = 0, j = 0;
+
+    for (int row = 0; row < n; row++){
+        for (int col = 0; col < n; col++){
+            if (row != p && col != q){
+                temp->data[i][j++] = mtx.data[row][col];
+
+                if (j == n - 1) {
+                    j = 0;
+                    i++;
+                }
+            }
+        }
+    }
+}
+
+double solve_determinant(Matrix mtx, int n){ 
+
+    if (mtx.cols != mtx.rows) {
+        printf("NON SQUARE MATRIX\n");
+        return 0;
+    }
+
+    double det_result = 0; 
+
+    // Base case 1x1
+    if (n == 1) return mtx.data[0][0];
+
+    Matrix temp = new_matrix(mtx.rows, mtx.cols);
+
+    int sign = 1; 
+
+    for (int f = 0; f < n; f++){
+        
+        submatrix(mtx, &temp, 0, f, n);
+        det_result += sign * mtx.data[0][f] * solve_determinant(temp, n - 1);
+
+        sign = -sign;
+    }
+
+    return det_result;
+}
+// ---------- END Solve Determiant
+
 // ---------- Strings Operations
 
 char* to_string(float value){

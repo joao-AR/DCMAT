@@ -18,6 +18,9 @@
         void free_matrix(Matrix* mtx);
         void populate_matrix(Matrix* mtx, char* mtx_str);
         void print_matrix(const Matrix* mtx);
+        double solve_determinant(Matrix mtx, int n);
+        void submatrix(Matrix mtx, Matrix *temp ,int p, int q, int n);
+        
     //Strings
     char* concat_strings(const char* str1, const char* str2);
     char* to_string(float value);

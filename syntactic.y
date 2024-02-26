@@ -48,6 +48,8 @@
     int mtx_rows = 1 ;  // Matrix Lines
     int mtx_columns = 0; // Matrix Columns
     int g_mtx_cols = 1;// Greater Matrix Columns
+
+    double det_res;
 	//End Custom VAR
     
     extern int yylex();
@@ -549,13 +551,28 @@ Matrix_value:
 
 Show_matrix: SHOW MATRIX SEMI END_INPUT 
     {   
-        printf("\n");
-        print_matrix(&mtx);
+        if(mtx.rows == 0){
+            printf("No Matrix Defined!\n");
+        }else{
+            printf("\n");
+            print_matrix(&mtx);
+        }
         return 0;
     }
 ;
 
-Solve_determinant: SOLVE DETERMINANT SEMI END_INPUT{printf("SOLVE DETERMINANT\n"); return 0;}
+Solve_determinant: 
+    SOLVE DETERMINANT SEMI END_INPUT 
+    {   
+        if(mtx.rows == 0){
+            printf("No Matrix Defined!\n");
+        }else{
+            printf("\n");
+            det_res = solve_determinant(mtx, mtx.rows);
+            printf("%lf",det_res);
+        }
+        return 0;
+    }
 
 Solve_linear_system: SOLVE LINEAR_SYSTEM SEMI END_INPUT{printf("SOLVE linear SYSTEM\n"); return 0;}
 
