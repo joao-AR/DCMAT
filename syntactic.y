@@ -8,6 +8,7 @@
     #include "plot.h"
     #include "stack.h"
     #include "operations.h"
+    #include "variables.h"
     
     // From lex.l
 	extern char* yytext;
@@ -50,6 +51,8 @@
     int g_mtx_cols = 1;// Greater Matrix Columns
 
     double det_res;
+
+    L_node *list = NULL;
 	//End Custom VAR
     
     extern int yylex();
@@ -573,13 +576,22 @@ Solve_determinant:
         }
         return 0;
     }
+;
 
-Solve_linear_system: SOLVE LINEAR_SYSTEM SEMI END_INPUT{printf("SOLVE linear SYSTEM\n"); return 0;}
+Solve_linear_system: 
+    SOLVE LINEAR_SYSTEM SEMI END_INPUT 
+        {
+            printf("SOLVE linear SYSTEM\n"); 
+            return 0;
+        }
+;
 
 Attr_val_simb: 
     VAR ATRI Expression SEMI END_INPUT 
-        {
-            printf("%s := %f;\n",$1,$3); 
+        {   
+            void* var = create_var($1,$3);
+            list_push_start(&list,var);
+            list_print(list);
             return 0;
         }
 ;
@@ -607,6 +619,7 @@ About:
 
 
 int main(int argc, char** argv){ 
+    
     exp_str_last = malloc(sizeof(char*));
     while (1) {
         rpn_string = malloc(sizeof(char*));
