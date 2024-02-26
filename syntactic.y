@@ -141,21 +141,27 @@ first:
     | Attr_val_matrix
         {   
             
-            free_matrix(&mtx_var);// clear old matrix
-
-            mtx_var = new_matrix(mtx_rows,g_mtx_cols);
-            populate_matrix(&mtx_var, mtx_str);
-            free(mtx_str);
             
-            void* new_mtx = create_matrix(mtx_var);
-            list_push_start(&list,"mtx",name_mtx_var,new_mtx);
+            
+            if(mtx_rows <= 10 && g_mtx_cols <=10){
+                free_matrix(&mtx_var);// clear old matrix
+                mtx_var = new_matrix(mtx_rows,g_mtx_cols);
+                populate_matrix(&mtx_var, mtx_str);
+                free(mtx_str);
+                
+                void* new_mtx = create_matrix(mtx_var);
+                list_push_start(&list,"mtx",name_mtx_var,new_mtx);
+                free(name_mtx_var);
+            }else{
+                printf("Matrix limits out of boundaries.\n");
+            }
+            
             
             // Reset 
             mtx_str = malloc(sizeof(char*));
             g_mtx_cols = 1;
             mtx_rows = 1;
             mtx_columns = 0;
-            free(name_mtx_var);
 
             return 0;
         }
@@ -179,8 +185,14 @@ first:
     | Matrix
         {   
             free_matrix(&mtx);
-            mtx = new_matrix(mtx_rows,g_mtx_cols);
-            populate_matrix(&mtx, mtx_str);
+            if(mtx_rows <= 10 && g_mtx_cols <=10){
+                mtx = new_matrix(mtx_rows,g_mtx_cols);
+                populate_matrix(&mtx, mtx_str);
+            }else{
+                printf("Matrix limits out of boundaries.\n");
+
+            }
+            
             free(mtx_str); 
             mtx_str = malloc(sizeof(char*));
             g_mtx_cols = 1;
@@ -619,6 +631,7 @@ Attr_val_simb:
             if(remove_node_list) free(remove_node_list);
             void* new_var = create_var($3);
             list_push_start(&list,"var",$1,new_var);
+            print_value($3);
             return 0;
         }
 ;
@@ -627,7 +640,6 @@ Attr_val_matrix:
     VAR ATRI OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT
         {   
             
-
             name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
             strcpy(name_mtx_var,$1);
 
