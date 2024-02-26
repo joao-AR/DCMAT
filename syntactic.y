@@ -55,6 +55,7 @@
     Matrix mtx_var;
     char* name_mtx_var;
     L_node *list = NULL;
+    L_node *remove_node_list;
 	//End Custom VAR
     
     extern int yylex();
@@ -62,6 +63,7 @@
 
     // Custom Functions
     void print_about();
+    void free_all();
 
 
 %}
@@ -139,21 +141,22 @@ first:
     | Attr_val_matrix
         {   
             
-            free_matrix(&mtx_var);
+            free_matrix(&mtx_var);// clear old matrix
+
             mtx_var = new_matrix(mtx_rows,g_mtx_cols);
             populate_matrix(&mtx_var, mtx_str);
             free(mtx_str);
             
             void* new_mtx = create_matrix(mtx_var);
             list_push_start(&list,"mtx",name_mtx_var,new_mtx);
-            list_print(list);
-            mtx_str = malloc(sizeof(char*));
             
+            // Reset 
+            mtx_str = malloc(sizeof(char*));
             g_mtx_cols = 1;
             mtx_rows = 1;
             mtx_columns = 0;
-            
             free(name_mtx_var);
+
             return 0;
         }
     | Expression END_INPUT
@@ -205,7 +208,8 @@ first:
 
 Quit: 
     QUIT 
-    {
+    {   
+        free_all();
         exit(0);
     }
 ;
@@ -611,10 +615,10 @@ Solve_linear_system:
 Attr_val_simb: 
     VAR ATRI Expression SEMI END_INPUT 
         {   
+            remove_node_list = list_remove(&list,$1);
+            if(remove_node_list) free(remove_node_list);
             void* new_var = create_var($3);
             list_push_start(&list,"var",$1,new_var);
-            printf("\n-----LIST-----\n");
-            list_print(list);
             return 0;
         }
 ;
@@ -622,8 +626,14 @@ Attr_val_simb:
 Attr_val_matrix: 
     VAR ATRI OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT
         {   
+            
+
             name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
             strcpy(name_mtx_var,$1);
+
+            remove_node_list = list_remove(&list,name_mtx_var);
+            if(remove_node_list) free(remove_node_list);
+
             if(mtx_columns > g_mtx_cols){
                 g_mtx_cols = mtx_columns;
             } 
@@ -636,9 +646,21 @@ Attr_val_matrix:
         }
 ;
 
-Show_var: VAR SEMI END_INPUT{printf("variavel; \n"); return 0;};
+Show_var: 
+    VAR SEMI END_INPUT 
+        {   
+            list_print_var(list,$1);
+            return 0;
+        }
+;
 
-Show_all_var: SHOW SYMBOLS SEMI END_INPUT{printf("show symbols;\n"); return 0;};
+Show_all_var: 
+    SHOW SYMBOLS SEMI END_INPUT 
+        {
+            list_print(list);
+            return 0;
+        }
+;
 
 About: 
     ABOUT SEMI END_INPUT 
@@ -660,15 +682,20 @@ int main(int argc, char** argv){
         printf("> ");
         yyparse();
     } 
+    free_all();
+	return 0;
+}
 
+void free_all(){
     free(rpn_string);
     free(exp_str);
     free(exp_str_last);
     free(mtx_str);
     free_matrix(&mtx);
-	return 0;
+    free(name_mtx_var);
+    free_matrix(&mtx_var);
+    free(remove_node_list);
 }
-
 void yyerror(char const *s){
     int i;
 	char c;

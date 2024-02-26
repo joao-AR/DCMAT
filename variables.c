@@ -73,12 +73,12 @@ void print_matrix_var(const M_var* mtx) {
 }
 
 void list_print(L_node *node){
-    
+    printf("\n");
     while (node){
         if(strcmp(node->var_type,"var")==0){
-            printf("%s = %lf\n",node->var_name,node->var.value);
+            printf("%s - FLOAT\n",node->var_name);
         }else{
-            printf("%s [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
+            printf("%s - MATRIX [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
             // print_matrix_var(&node->mtx);
         }
 
@@ -87,17 +87,51 @@ void list_print(L_node *node){
     
 }
 
-// void list_search(L_node *node, char* name_var){
-    
-//     while (node){
-//         if(strcmp(node->var_type,"var")==0){
-//             printf("%s = %lf\n",node->var_name,node->var.value);
-//         }else{
-//             printf("%s [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
-//             // print_matrix_var(&node->mtx);
-//         }
 
-//         node = node->next;
-//     }
+void list_print_var(L_node *node, char* name_var){
+    printf("\n");
+    while (node){
+        if(strcmp(node->var_name,name_var)==0){
+            if(strcmp(node->var_type,"var")==0 ){
+                printf("%s - FLOAT\n",node->var_name);
+                return;
+            }else{
+                printf("%s - MATRIX [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
+                // print_matrix_var(&node->mtx);
+                return;
+            }
+        }
+        node = node->next;
+    }
+    printf("Variable Not Found!\n");
+    return;
+}
+
+L_node* list_remove(L_node** node, char* name_var) {
+    L_node* remove = NULL;
+    L_node* aux = NULL;
     
-// }
+    if (node == NULL || *node == NULL) {
+        return NULL;  // Check for NULL pointer or empty list
+    }
+
+    // Check if the first node is the one to be removed
+    if (strcmp((*node)->var_name, name_var) == 0) {
+        remove = *node;
+        *node = remove->next;
+    } else {
+        // Traverse the list to find the node to remove
+        aux = *node;
+        while (aux->next && strcmp(aux->next->var_name, name_var) != 0) {
+            aux = aux->next;
+        }
+
+        // If the node is found, remove it
+        if (aux->next) {
+            remove = aux->next;
+            aux->next = remove->next;
+        }
+    }
+
+    return remove;
+}
