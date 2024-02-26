@@ -33,6 +33,11 @@ void print_settings(){
 
 void set_view(float lo, float hi,char type){
 
+    if(lo > hi){
+        printf("ERROR: %c_view_lo most be smaller than %c_view_hi\n",type,type);
+        return;
+    }
+
     if(type == 'h'){
         h_view_lo = lo;
         h_view_hi = hi;

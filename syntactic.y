@@ -245,15 +245,15 @@ Reset_Settings:
 ;
 
 Set_View: 
-    SET H_VIEW OB Factor CB INTERVAL OB Factor CB SEMI END_INPUT // set h_view [valor float] :  [valor float];
+    SET H_VIEW  Factor  INTERVAL  Factor  SEMI END_INPUT // set h_view [valor float] :  [valor float];
         { 
-            set_view($4,$8,'h'); 
+            set_view($3,$5,'h'); 
             return 0;
         }
     
-    |SET V_VIEW OB Factor CB INTERVAL OB Factor CB SEMI END_INPUT  // set v_view [valor float] :  [valor float];
+    |SET V_VIEW Factor INTERVAL Factor SEMI END_INPUT  // set v_view [valor float] :  [valor float];
         {
-            set_view($4,$8,'v');
+            set_view($3,$5,'v');
             return 0;
         }
 ;
@@ -289,6 +289,11 @@ Set_integral_steps:
     SET INTEGRAL_STEPS INTEGER SEMI END_INPUT 
         {
             set_integral_steps($3);
+            return 0;
+        }
+    |SET INTEGRAL_STEPS MINUS INTEGER SEMI END_INPUT 
+        {
+            printf("ERROR: integral_steps must be positive non-zero integer\n");
             return 0;
         }
 ;
@@ -514,7 +519,11 @@ Rpn_func:
 Integrate: 
     INTEGRATE OP Factor INTERVAL Factor COMMA Expression CP SEMI END_INPUT 
         {   
-            riemann_sum($3,$5,exp_str);
+            if($3 > $5){
+                printf("ERROR: lower limit must be smaller than upper limit\n");
+            }else{
+                riemann_sum($3,$5,exp_str);
+            }
             return 0;
         }
 ; 
@@ -609,8 +618,12 @@ Solve_determinant:
             printf("No Matrix Defined!\n");
         }else{
             printf("\n");
-            det_res = solve_determinant(mtx, mtx.rows);
-            printf("%lf",det_res);
+            // if(mtx.rows != mtx.cols){
+            //     printf("Matrix format incorrect!");
+            // }else{
+                det_res = solve_determinant(mtx, mtx.rows);
+                print_value(det_res);
+            // }
         }
         return 0;
     }
