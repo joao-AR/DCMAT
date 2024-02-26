@@ -144,8 +144,8 @@ first:
             populate_matrix(&mtx_var, mtx_str);
             free(mtx_str);
             
-            void* new_mtx = create_matrix(name_mtx_var,mtx_var);
-            list_push_start(&list,"mtx",new_mtx);
+            void* new_mtx = create_matrix(mtx_var);
+            list_push_start(&list,"mtx",name_mtx_var,new_mtx);
             list_print(list);
             mtx_str = malloc(sizeof(char*));
             
@@ -611,8 +611,8 @@ Solve_linear_system:
 Attr_val_simb: 
     VAR ATRI Expression SEMI END_INPUT 
         {   
-            void* new_var = create_var($1,$3);
-            list_push_start(&list,"var",new_var);
+            void* new_var = create_var($3);
+            list_push_start(&list,"var",$1,new_var);
             printf("\n-----LIST-----\n");
             list_print(list);
             return 0;
