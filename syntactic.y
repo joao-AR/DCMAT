@@ -52,6 +52,8 @@
 
     double det_res;
 
+    Matrix mtx_var;
+    char* name_mtx_var;
     L_node *list = NULL;
 	//End Custom VAR
     
@@ -135,6 +137,25 @@ first:
     Quit
     | Attr_val_simb
     | Attr_val_matrix
+        {   
+            
+            free_matrix(&mtx_var);
+            mtx_var = new_matrix(mtx_rows,g_mtx_cols);
+            populate_matrix(&mtx_var, mtx_str);
+            free(mtx_str);
+            
+            void* new_mtx = create_matrix(name_mtx_var,mtx_var);
+            list_push_start(&list,"mtx",new_mtx);
+            list_print(list);
+            mtx_str = malloc(sizeof(char*));
+            
+            g_mtx_cols = 1;
+            mtx_rows = 1;
+            mtx_columns = 0;
+            
+            free(name_mtx_var);
+            return 0;
+        }
     | Expression END_INPUT
         {   
             
@@ -498,12 +519,13 @@ Matrix:
             } 
         }
     
-    |MATRIX EQUAL OB OB  Matrix_column CB CB SEMI END_INPUT 
+    | MATRIX EQUAL OB OB  Matrix_column CB CB SEMI END_INPUT 
         {   
             if(mtx_columns > g_mtx_cols){
                 g_mtx_cols = mtx_columns;
             } 
         }
+    |
 
 ;
 
@@ -589,18 +611,28 @@ Solve_linear_system:
 Attr_val_simb: 
     VAR ATRI Expression SEMI END_INPUT 
         {   
-            void* var = create_var($1,$3);
-            list_push_start(&list,var);
+            void* new_var = create_var($1,$3);
+            list_push_start(&list,"var",new_var);
+            printf("\n-----LIST-----\n");
             list_print(list);
             return 0;
         }
 ;
 
 Attr_val_matrix: 
-    VAR ATRI Matrix END_INPUT
+    VAR ATRI OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT
+        {   
+            name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
+            strcpy(name_mtx_var,$1);
+            if(mtx_columns > g_mtx_cols){
+                g_mtx_cols = mtx_columns;
+            } 
+        }
+    |VAR ATRI OB OB  Matrix_column CB CB SEMI END_INPUT
         {
-            printf("varaivel := matrix\n"); 
-            return 0;
+            if(mtx_columns > g_mtx_cols){
+                g_mtx_cols = mtx_columns;
+            } 
         }
 ;
 
@@ -619,7 +651,7 @@ About:
 
 
 int main(int argc, char** argv){ 
-    
+
     exp_str_last = malloc(sizeof(char*));
     while (1) {
         rpn_string = malloc(sizeof(char*));
