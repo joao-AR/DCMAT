@@ -135,3 +135,20 @@ L_node* list_remove(L_node** node, char* name_var) {
 
     return remove;
 }
+
+
+L_node* list_seach(L_node* node, char* name_var) {
+    
+    if (node == NULL) {
+        return NULL;  // Check for NULL pointer or empty list
+    }
+
+    while (node){
+        if(strcmp(node->var_name, name_var) == 0){
+            return node;
+        }
+        node = node->next;
+    }
+    
+    return NULL;
+}

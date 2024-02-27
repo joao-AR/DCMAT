@@ -26,6 +26,6 @@
     void list_print(L_node *node);
     void list_print_var(L_node *node, char* name_var);
     L_node* list_remove(L_node **node,char* name_var);
-
+    L_node* list_seach(L_node* node, char* name_var);
 
 #endif

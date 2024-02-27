@@ -56,6 +56,7 @@
     char* name_mtx_var;
     L_node *list = NULL;
     L_node *remove_node_list;
+    
 	//End Custom VAR
     
     extern int yylex();
@@ -167,12 +168,13 @@ first:
         }
     | Expression END_INPUT
         {   
-            
+            // printf("expression = %s \n",exp_str);
+            double calc_val = calc_rpn(0,exp_str,"x");
+            print_value(calc_val);
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
             
             exp_str = malloc(sizeof(char*));
-            print_value($1);
             return 0;
         } 
     | Show_Settings 
@@ -313,7 +315,17 @@ Set_float_precision:
 Expression:
     VAR
         {   
-            exp_str = concat_strings(exp_str,$1);
+            L_node *var_node = list_seach(list, $1);
+            if(var_node){
+                // printf("var name = %s %lf\n",var_node->var_name, var_node->var.value);
+                aux_string = to_string(var_node->var.value);
+                exp_str = concat_strings(exp_str,aux_string);
+            }else{
+                printf("Var not Found %s\n",$1);
+                return 0;
+            }
+            
+
         }
     |Function
     |Factor 
