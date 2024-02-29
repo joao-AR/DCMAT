@@ -6,6 +6,7 @@
 
 #include "stack.h"
 #include "operations.h"
+#include "variables.h"
 
 //From Settings
     extern float h_view_lo;

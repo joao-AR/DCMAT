@@ -1,11 +1,7 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
-    typedef struct matrix{
-        double** data;
-        int rows;
-        int cols;
-    } Matrix;
 
+    #include "variables.h"
     //Math functions
     void print_value(float num);
     void riemann_sum(float inf,float sup,char *expression);

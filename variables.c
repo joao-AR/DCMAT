@@ -12,7 +12,7 @@ void* create_var(double value){
 } 
 
 void* create_matrix(Matrix mtx){
-    M_var *new_mtx = malloc(sizeof(M_var));
+    Matrix *new_mtx = malloc(sizeof(Matrix));
 
     new_mtx->rows = mtx.rows;
     new_mtx->cols = mtx.cols;
@@ -41,7 +41,7 @@ void list_push_start(L_node **list, char* type_var,char* name, void* variable){
     
     }else if(strcmp(type_var,"mtx")==0){
         
-        M_var *mtx_var = (M_var*) variable;
+        Matrix *mtx_var = (Matrix*) variable;
 
         node->mtx.cols = mtx_var->cols;
         node->mtx.rows = mtx_var->rows;
@@ -62,7 +62,7 @@ void list_push_start(L_node **list, char* type_var,char* name, void* variable){
 }
 
 // Function to print the matrix
-void print_matrix_var(const M_var* mtx) {
+void print_matrix_var(const Matrix* mtx) {
     
     for (int l = 0; l < mtx->rows; l++) {
         for (int m = 0; m < mtx->cols; m++) {

@@ -1,21 +1,21 @@
 #ifndef VARIABLE_H 
 #define VARIABLE_H
-    #include "operations.h"
+ 
     #include <stdbool.h>
     typedef struct float_var{
         double value;
         }F_var;
 
-    typedef struct matrix_var{
+    typedef struct matrix{
         double** data;
         int rows;
         int cols;
-    }M_var;
+    } Matrix;
 
     typedef struct list{   
         char* var_name;
         F_var var;
-        M_var mtx;
+        Matrix mtx;
         char var_type[4];
         struct list *next;
     }L_node;
