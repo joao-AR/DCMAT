@@ -84,31 +84,83 @@ bool is_operation_or_function(char* string, int type){
     return false;
 }
 
+
+// Returns:
+// 0 =  FLOAT FLOAT
+// 1 =  MATRIX MATRIX
+// 2 =  MATRIX FLOAT
+// 3 = FLOAT MATRIX
+int is_deferent_types(int type, int last_type ){
+    
+    if(type == last_type ){ 
+
+        if(type == 1){
+            return 0;    // 0 =  FLOAT FLOAT
+        }else{
+            return 1; // 1 =  MATRIX MATRIX
+        }
+
+    }else{
+        if(type == 2){ // 2 =  MATRIX FLOAT
+            return 2;
+        }else{
+            return 3; // 3 = FLOAT MATRIX
+        }
+    }
+}
+
+void mult_mtx_by_factor(Matrix* mtx, double factor){
+    
+    for (int i = 0; i < mtx->rows; i++) {
+        for (int j = 0; j < mtx->cols; j++) {
+            mtx->data[i][j] = mtx->data[i][j] * factor;
+        }
+    }
+    printf("\n");
+    print_matrix(mtx);
+}
+
+
 void calc_rpn_std(char *expression, L_node *list){ // Standard implementation for calc RPN
     double num;
     Stack_node *n1, *n2, *stack = NULL;
+    
+    L_node *m1,*m2;
 
     // Used to check what kind of values we are making operetions
     int type = 0; // 0 = undefined 1 = FLOAT 2 = MATRIX
     int last_type = 0; // 0 = undefined 1 = FLOAT 2 = MATRIX
-    
+    int mtx_qtd  = 0 ;
+    int dif_types;
     expression = strtok(expression," ");
 
     while (expression){ 
-        //printf("Typen1 = %d ; TypeN2 = %d \n", type, last_type);
+        
+        dif_types = is_deferent_types(type,last_type);
 
         if(is_operation_or_function(expression,1)){
             
-            if(strcmp(expression, "*") != 0){ // Only FLOAT * MATRIX or MATRIX * FLOAT are allowed 
-                if(type == 1 && last_type == 2){
-                    printf("Incorrect type for operator ’%s’ - have FLOAT and MATRIX\n",expression);
-                    return;
-
-                }else if(type == 2 &&  last_type == 1){
-                    printf("Incorrect type for operator ’%s’ - have MATRIX and FLOAT\n",expression);
-                    return;
+            //Operation Between two var types |FLOAT MATRIX| |MATRIX FLOAT|
+            if(dif_types >= 2){ 
+                
+                if(is_mult_float_matrix(expression, type, last_type)){
+                    n1 = stack_pop(&stack);
+                    mult_mtx_by_factor(&m1->mtx,n1->value);
+                    free(n1);
+                }else{
+                    
+                    printf("Incorrect type for operator ’%s’ - have ",expression);
+                    if(dif_types == 2 ) printf("MATRIX and FLOAT\n");
+                    if(dif_types == 3 ) printf("FLOAT and MATRIX\n");
+                    
                 }
+                return;
+
+            }else{
+
             }
+            
+    
         }else if(is_operation_or_function(expression,2)){
 
         }else{
@@ -116,6 +168,14 @@ void calc_rpn_std(char *expression, L_node *list){ // Standard implementation fo
             if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
                 last_type = type;
                 type = 2;
+                if(mtx_qtd == 0){
+                    m1 = list_seach(list,expression);
+                    mtx_qtd++;
+                }else if(mtx_qtd == 1){
+                    m2 = list_seach(list,expression);
+                    mtx_qtd++;
+                }
+
             }else{
                 last_type = type;
                 type = 1;
@@ -123,9 +183,27 @@ void calc_rpn_std(char *expression, L_node *list){ // Standard implementation fo
                 stack = stack_push(stack,num);
             }
         }
+        
         expression = strtok(NULL," ");
     }
+
+    // if(m1) free(m1);
+    // if(m2) free(m2);
+    if(mtx_qtd == 0 ) print_value(num); // Only print num when thas no matrix in the expression
     return;
+}
+
+bool matrix_operations(Matrix* mtx1, Matrix mtx2){
+
+}
+
+
+
+bool is_mult_float_matrix(char* op, int type, int last_type){
+    if(strcmp(op, "*") == 0 && type != last_type && (type == 2 || last_type == 2)){
+        return true;
+    }
+    return false;
 }
 
 float calc_rpn (float x,char *expression,char* var){
@@ -258,6 +336,7 @@ void print_matrix(const Matrix* mtx) {
         printf("\n");
     }
 }
+
 
 
 // ---------- Solve Determiant

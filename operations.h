@@ -18,6 +18,7 @@
         void print_matrix(const Matrix* mtx);
         double solve_determinant(Matrix mtx, int n);
         void submatrix(Matrix mtx, Matrix *temp ,int p, int q, int n);
+        bool is_mult_float_matrix(char* op, int type, int last_type);
         
     //Strings
     char* concat_strings(const char* str1, const char* str2);
