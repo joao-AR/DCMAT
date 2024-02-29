@@ -152,3 +152,18 @@ L_node* list_seach(L_node* node, char* name_var) {
     
     return NULL;
 }
+
+int is_in_list(L_node* node, char* name_var){
+    // 0 = False 1 = True
+    if (node == NULL) {
+        return 0; 
+    }
+
+    while (node){
+        if(strcmp(node->var_name, name_var) == 0){
+            return 1;
+        }
+        node = node->next;
+    }
+    return 0;
+}

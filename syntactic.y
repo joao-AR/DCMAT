@@ -169,8 +169,10 @@ first:
     | Expression END_INPUT
         {   
             // printf("expression = %s \n",exp_str);
-            double calc_val = calc_rpn(0,exp_str,"x");
-            print_value(calc_val);
+            // double calc_val = calc_rpn(0,exp_str,"x");
+            calc_rpn_std(exp_str,list);
+            //printf("exp_str = %s\n",exp_str);
+            //print_value(calc_val);
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
             
@@ -316,10 +318,13 @@ Expression:
     VAR
         {   
             L_node *var_node = list_seach(list, $1);
-            if(var_node){
-                // printf("var name = %s %lf\n",var_node->var_name, var_node->var.value);
+            if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
                 aux_string = to_string(var_node->var.value);
                 exp_str = concat_strings(exp_str,aux_string);
+            
+            }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
+                exp_str = concat_strings(exp_str,var_node->var_name);
+            
             }else{
                 printf("Var not Found %s\n",$1);
                 return 0;

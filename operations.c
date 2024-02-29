@@ -84,6 +84,50 @@ bool is_operation_or_function(char* string, int type){
     return false;
 }
 
+void calc_rpn_std(char *expression, L_node *list){ // Standard implementation for calc RPN
+    double num;
+    Stack_node *n1, *n2, *stack = NULL;
+
+    // Used to check what kind of values we are making operetions
+    int type = 0; // 0 = undefined 1 = FLOAT 2 = MATRIX
+    int last_type = 0; // 0 = undefined 1 = FLOAT 2 = MATRIX
+    
+    expression = strtok(expression," ");
+
+    while (expression){ 
+        //printf("Typen1 = %d ; TypeN2 = %d \n", type, last_type);
+
+        if(is_operation_or_function(expression,1)){
+            
+            if(strcmp(expression, "*") != 0){ // Only FLOAT * MATRIX or MATRIX * FLOAT are allowed 
+                if(type == 1 && last_type == 2){
+                    printf("Incorrect type for operator ’%s’ - have FLOAT and MATRIX\n",expression);
+                    return;
+
+                }else if(type == 2 &&  last_type == 1){
+                    printf("Incorrect type for operator ’%s’ - have MATRIX and FLOAT\n",expression);
+                    return;
+                }
+            }
+        }else if(is_operation_or_function(expression,2)){
+
+        }else{
+
+            if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
+                last_type = type;
+                type = 2;
+            }else{
+                last_type = type;
+                type = 1;
+                num = atof(expression);
+                stack = stack_push(stack,num);
+            }
+        }
+        expression = strtok(NULL," ");
+    }
+    return;
+}
+
 float calc_rpn (float x,char *expression,char* var){
     /* printf("xis = %f\n",x); */
     float num;

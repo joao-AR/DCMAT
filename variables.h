@@ -1,6 +1,6 @@
 #ifndef VARIABLE_H 
 #define VARIABLE_H
- 
+
     #include <stdbool.h>
     typedef struct float_var{
         double value;
@@ -27,5 +27,6 @@
     void list_print_var(L_node *node, char* name_var);
     L_node* list_remove(L_node **node,char* name_var);
     L_node* list_seach(L_node* node, char* name_var);
+    int is_in_list(L_node* node, char* name_var);
 
 #endif
