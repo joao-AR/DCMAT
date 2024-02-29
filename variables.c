@@ -3,25 +3,13 @@
 #include <string.h>
 
 #include "variables.h"
-
+#include "operations.h"
 
 void* create_var(double value){
     F_var *new_var = malloc(sizeof(F_var));
     new_var->value = value;
     return new_var;
 } 
-
-void* create_matrix(Matrix mtx){
-    Matrix *new_mtx = malloc(sizeof(Matrix));
-
-    new_mtx->rows = mtx.rows;
-    new_mtx->cols = mtx.cols;
-
-    new_mtx->data = (double**)malloc(sizeof(mtx.data));
-
-    new_mtx->data = mtx.data;
-    return new_mtx;
-}
 
 void list_push_start(L_node **list, char* type_var,char* name, void* variable){
     
@@ -31,45 +19,98 @@ void list_push_start(L_node **list, char* type_var,char* name, void* variable){
     
     if(node == NULL) return ; 
     
-    if(strcmp(type_var,"var")==0){
-        F_var* var;
-        var = (F_var*) variable;
-        node->var.value = var->value;
-        node->var_name = (char*)malloc(sizeof(name));
-        strcpy(node->var_name,name);
-        strcpy(node->var_type,"var");
-    
-    }else if(strcmp(type_var,"mtx")==0){
-        
-        Matrix *mtx_var = (Matrix*) variable;
-
-        node->mtx.cols = mtx_var->cols;
-        node->mtx.rows = mtx_var->rows;
-
-        node->var_name = (char*)malloc(sizeof(name));
-        strcpy(node->var_name,name);
-
-        node->mtx.data = (double**)malloc(sizeof(mtx_var->data));
-        node->mtx.data = mtx_var->data;
-        strcpy(node->var_type,"mtx");
-    }
-
-    node->next = NULL;
+    F_var* var;
+    var = (F_var*) variable;
+    node->var.value = var->value;
+    node->var_name = (char*)malloc(sizeof(name));
+    strcpy(node->var_name,name);
+    strcpy(node->var_type,"var");
 
     node->next = (*list);
     *list = node;
-    return ;
+    return;
+}
+
+void list_push_matrix_start(L_node **list,char* name, char* mtx_str, int rows, int cols){
+    
+    if(list == NULL) return;
+
+    L_node *node = (L_node*) malloc(sizeof(L_node));
+    
+    if(node == NULL) return ; 
+    
+    node->mtx.cols = cols;
+    node->mtx.rows = rows;
+
+    node->var_name = (char*)malloc(sizeof(name));
+    strcpy(node->var_name,name);
+
+    strcpy(node->var_type,"mtx");
+
+    //Initialize matrix
+
+    node->mtx.data = (double**) malloc(rows * sizeof(double*));
+    for(int i = 0; i < rows; i++){
+        node->mtx.data[i] = (double*)malloc(cols * sizeof(double));
+    }
+
+    // Populate Matrix
+    int i = 0;
+    int j = 0;
+
+    char* token = strtok(mtx_str, " ");
+
+    while (token) {
+        if (strcmp(token, "|") == 0) {
+            j++;
+            i = 0;
+        } else {
+            if (j < node->mtx.rows && i < node->mtx.cols) {
+                node->mtx.data[j][i] = strtod(token, NULL);
+                i++;
+            }
+        }
+        token = strtok(NULL, " ");
+    }
+
+    node->next = (*list);
+    *list = node;
+    return;
 }
 
 // Function to print the matrix
 void print_matrix_var(const Matrix* mtx) {
-    
+
     for (int l = 0; l < mtx->rows; l++) {
         for (int m = 0; m < mtx->cols; m++) {
             printf("%12.8lf ", mtx->data[l][m]);
         }
         printf("\n");
     }
+}
+
+void list_print_debug(L_node *node){
+    printf("DEBUG LISTA PRINT\n");
+    while (node){
+        if(strcmp(node->var_type,"var")==0){
+            printf("%s - FLOAT\n",node->var_name);
+        }else{
+            printf("%s - MATRIX [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
+        
+            for (int i = 0; i < node->mtx.rows; i++)
+            {
+                for (int j = 0; j < node->mtx.cols; j++)
+                {
+                    printf("%lf ",node->mtx.data[i][j]);
+                }
+                printf("\n");
+            }
+            
+        }
+    printf("FIM DEBUG LISTA PRINT\n");
+        node = node->next;
+    }
+    
 }
 
 void list_print(L_node *node){
@@ -87,19 +128,17 @@ void list_print(L_node *node){
     
 }
 
-
 void list_print_var(L_node *node, char* name_var){
     printf("\n");
     while (node){
         if(strcmp(node->var_name,name_var)==0){
             if(strcmp(node->var_type,"var")==0 ){
                 printf("%s - FLOAT\n",node->var_name);
-                return;
             }else{
                 printf("%s - MATRIX [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
-                // print_matrix_var(&node->mtx);
-                return;
+                print_matrix_var(&node->mtx);
             }
+            return;
         }
         node = node->next;
     }

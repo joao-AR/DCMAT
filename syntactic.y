@@ -141,23 +141,17 @@ first:
     | Attr_val_simb
     | Attr_val_matrix
         {   
-            
-            
+
             
             if(mtx_rows <= 10 && g_mtx_cols <=10){
-                free_matrix(&mtx_var);// clear old matrix
-                mtx_var = new_matrix(mtx_rows,g_mtx_cols);
-                populate_matrix(&mtx_var, mtx_str);
+                list_push_matrix_start(&list,name_mtx_var,mtx_str,mtx_rows, g_mtx_cols);
                 free(mtx_str);
-                
-                void* new_mtx = create_matrix(mtx_var);
-                list_push_start(&list,"mtx",name_mtx_var,new_mtx);
                 free(name_mtx_var);
             }else{
                 printf("Matrix limits out of boundaries.\n");
             }
             
-            
+
             // Reset 
             mtx_str = malloc(sizeof(char*));
             g_mtx_cols = 1;
@@ -668,6 +662,9 @@ Attr_val_matrix:
     VAR ATRI OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT
         {   
             
+            // printf("List print\n");
+            // list_print(list);
+            // printf("\nENDList print\n");
             name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
             strcpy(name_mtx_var,$1);
 
@@ -679,7 +676,9 @@ Attr_val_matrix:
             } 
         }
     |VAR ATRI OB OB  Matrix_column CB CB SEMI END_INPUT
-        {
+        {   
+            name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
+            strcpy(name_mtx_var,$1);
             if(mtx_columns > g_mtx_cols){
                 g_mtx_cols = mtx_columns;
             } 

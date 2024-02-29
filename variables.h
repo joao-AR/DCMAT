@@ -21,12 +21,14 @@
     }L_node;
 
     void* create_var(double value);
-    void* create_matrix(Matrix mtx);
     void list_push_start(L_node **list, char* type_var,char* name, void* variable);
+    void list_push_matrix_start(L_node **list,char* name, char* mtx_str, int rows, int cols);
     void list_print(L_node *node);
     void list_print_var(L_node *node, char* name_var);
     L_node* list_remove(L_node **node,char* name_var);
     L_node* list_seach(L_node* node, char* name_var);
+    void list_print_debug(L_node *node);
     int is_in_list(L_node* node, char* name_var);
+    void print_matrix_var(const Matrix* mtx);
 
 #endif
