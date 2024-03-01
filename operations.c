@@ -85,46 +85,11 @@ bool is_operation_or_function(char* string, int type){
 }
 
 
-// Returns:
-// 0 =  FLOAT FLOAT
-// 1 =  MATRIX MATRIX
-// 2 =  MATRIX FLOAT
-// 3 = FLOAT MATRIX
-int is_deferent_types(int type, int last_type ){
-    
-    if(type == last_type ){ 
-
-        if(type == 1){
-            return 0;    // 0 =  FLOAT FLOAT
-        }else{
-            return 1; // 1 =  MATRIX MATRIX
-        }
-
-    }else{
-        if(type == 2){ // 2 =  MATRIX FLOAT
-            return 2;
-        }else{
-            return 3; // 3 = FLOAT MATRIX
-        }
-    }
-}
-
-void mult_mtx_by_factor(Matrix* mtx, double factor){
-    
-    for (int i = 0; i < mtx->rows; i++) {
-        for (int j = 0; j < mtx->cols; j++) {
-            mtx->data[i][j] = mtx->data[i][j] * factor;
-        }
-    }
-    printf("\n");
-    print_matrix(mtx);
-}
-
 bool matrix_dim_error(int rows1, int cols1, int rows2,int cols2,char* op){
 
     if( ((strcmp(op,"+") == 0 || strcmp(op,"-") == 0 ) && (rows1 != rows2 || cols1 != cols2) ) 
         || strcmp(op,"*") == 0 &&  cols1 != rows2){
-        printf("Incorrect dimensions for operator '%s' - have MATRIX [%d][%d] and MATRIX [%d][%d]",op,rows1,cols1,rows2,cols2);
+        printf("Incorrect dimensions for operator '%s' - have MATRIX [%d][%d] and MATRIX [%d][%d]\n",op,rows1,cols1,rows2,cols2);
         return true;
     }
 
@@ -132,24 +97,28 @@ bool matrix_dim_error(int rows1, int cols1, int rows2,int cols2,char* op){
 }
 
 void sum_matrix(Matrix *mtx1, Matrix *mtx2,Matrix *result_mtx){
-
     //Populate Matrix
     for(int i = 0; i < mtx1->rows; i++){
         for(int j = 0; j < mtx1->cols; j++) result_mtx->data[i][j] = mtx1->data[i][j] + mtx2->data[i][j];
     }
-
-    printf("\n");
-    print_matrix_var(result_mtx);
 }
+
+Matrix* mult_mtx_by_factor(Matrix* mtx, double factor){
+    
+    for (int i = 0; i < mtx->rows; i++) {
+        for (int j = 0; j < mtx->cols; j++) {
+            mtx->data[i][j] = mtx->data[i][j] * factor;
+        }
+    }
+    return mtx;
+}
+
 
 void sub_matrix(Matrix *mtx1, Matrix *mtx2, Matrix *result_mtx){
     //Populate Matrix
     for(int i = 0; i < mtx1->rows; i++){
         for(int j = 0; j < mtx1->cols; j++) result_mtx->data[i][j] = mtx1->data[i][j] - mtx2->data[i][j];
     }
-
-    printf("\n");
-    print_matrix_var(result_mtx);
 }
 
 void mult_matrix(Matrix *mtx1, Matrix *mtx2,Matrix *result_mtx){
@@ -163,12 +132,9 @@ void mult_matrix(Matrix *mtx1, Matrix *mtx2,Matrix *result_mtx){
             }
         }
     }
-
-    printf("\n");
-    print_matrix_var(result_mtx);
 }   
 
-void matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
+Matrix* matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
     
     bool error = false;
 
@@ -184,26 +150,23 @@ void matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
     
     if(strcmp(op,"+") == 0){
         error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
-        if(error) return;
+        if(error) return NULL;
         sum_matrix(mtx1,mtx2,result_mtx);
 
     }else if(strcmp(op,"-") == 0){
         error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
-        if(error) return;
+        if(error) return NULL;
         sub_matrix(mtx1,mtx2,result_mtx);
     }else if(strcmp(op,"*") == 0){
         error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
-        if(error) return;
-
+        if(error) return NULL;
         mult_matrix(mtx1,mtx2,result_mtx);
+    }else{
+        printf("Not accepted MATRIX operation '%s' \n",op);
     }
 
-    free(result_mtx);
-    return;
+    return result_mtx;
 }
-
-
-
 
 void calc_rpn_std(char *expression, L_node *list){ // Standard implementation for calc RPN
     double num;
@@ -211,106 +174,96 @@ void calc_rpn_std(char *expression, L_node *list){ // Standard implementation fo
     
     L_node *m1,*m2;
 
-    // Used to check what kind of values we are making operetions
-    int type = 0; // 0 = undefined 1 = FLOAT 2 = MATRIX
-    int last_type = 0; // 0 = undefined 1 = FLOAT 2 = MATRIX
-    int mtx_qtd  = 0 ;
-    int dif_types;
+    Matrix *n3;
+    
     expression = strtok(expression," ");
 
     while (expression){ 
-        
-        dif_types = is_deferent_types(type,last_type);
         if(is_operation_or_function(expression,1)){
-            //Operation Between two var types |FLOAT MATRIX| |MATRIX FLOAT|
             
-            if(dif_types == 2 ||dif_types == 3 ){ 
-                if(is_mult_float_matrix(expression, type, last_type)){
-                    n1 = stack_pop(&stack);
-                    mult_mtx_by_factor(&m1->mtx,n1->value);
-                    free(n1);
-                }else{
-                    
-                    printf("Incorrect type for operator '%s' - have ",expression);
-                    if(dif_types == 2 ) printf("MATRIX and FLOAT\n");
-                    if(dif_types == 3 ) printf("FLOAT and MATRIX\n");
-                    
-                }
-                return;
+            n1 = stack_pop(&stack);
+            n2 = stack_pop(&stack);
 
-            }else if(dif_types == 1){ //|MATRIX MATRIX|
-                matrix_operations(&m1->mtx,&m2->mtx,expression);
-                return;
+            if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"var") == 0 ){  // |FLOAT FLOAT|
+                num = calc_values(n2->var.value,n1->var.value,expression);
+                stack_push(&stack,num);
+            
+            }else if(strcmp(n1->var_type,"mtx") == 0 && strcmp(n2->var_type,"var") == 0 ){ //  |MATRIX FLOAT|
+                if(strcmp(expression,"*") != 0){ printf("Incorrect type for operator '%s' - have MATRIX and FLOAT\n",expression); return;}
+
+                n3 =  mult_mtx_by_factor(&n1->mtx, n2->var.value);
+                print_matrix(n3);
+                stack_push_matrix(&stack,n3);
+                
+            }else if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"mtx") == 0 ){ //  |FLOAT MATRIX|
+                if(strcmp(expression,"*") != 0) {printf("Incorrect type for operator '%s' - have  FLOAT and MATRIX\n",expression); return;}
+                n3 =  mult_mtx_by_factor(&n2->mtx, n1->var.value);
+                stack_push_matrix(&stack,n3);
+
+            }else{ //|MATRIX MATRIX|
+                n3 = matrix_operations(&n1->mtx,&n2->mtx,expression);
+                if(n3 == NULL) return;
+                stack_push_matrix(&stack,n3);
             }
+            
+            free(n1);
+            free(n2);
     
         }else if(is_operation_or_function(expression,2)){
-
+                n1 = stack_pop(&stack);
+                num = calc_values(0,n1->var.value,expression);
+                stack_push(&stack,num);
+                free(n1);
+            
         }else{
             
             if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
-                last_type = type;
-                type = 2;
-                if(mtx_qtd == 0){
-                    m1 = list_seach(list,expression);
-                    mtx_qtd++;
-                }else if(mtx_qtd == 1){
-                    m2 = list_seach(list,expression);
-                    mtx_qtd++;
-                }
-
+                m1 = list_seach(list,expression);
+                stack_push_matrix(&stack, &m1->mtx);
             }else{
-                last_type = type;
-                type = 1;
                 num = atof(expression);
-                stack = stack_push(stack,num);
+                stack_push(&stack, num);
             }
         }
         
         expression = strtok(NULL," ");
     }
 
-    // if(m1) free(m1);
-    // if(m2) free(m2);
-    if(mtx_qtd == 0 ) print_value(num); // Only print num when thas no matrix in the expression
+    if(strcmp(stack->var_type,"var")==0) print_value(stack->var.value);
+    if(strcmp(stack->var_type,"mtx")==0) print_matrix(&stack->mtx);
+    
     return;
 }
 
 
-
-bool is_mult_float_matrix(char* op, int type, int last_type){
-    if(strcmp(op, "*") == 0 && type != last_type && (type == 2 || last_type == 2)){
-        return true;
-    }
-    return false;
-}
-
-float calc_rpn (float x,char *expression,char* var){
-    /* printf("xis = %f\n",x); */
-    float num;
+double calc_rpn_plot (double x,char *expression,char* var){
+    
+    double num;
     Stack_node *n1,*n2, *stack = NULL; 
 
     expression = strtok(expression," ");
     while(expression){
         if(is_operation_or_function(expression,1)){
             n1 = stack_pop(&stack);
-            n2 = stack_pop(&stack); 
-            num = calc_values(n2->value,n1->value,expression);
-            stack = stack_push(stack,num);
+            n2 = stack_pop(&stack);
+            
+            num = calc_values(n2->var.value,n1->var.value,expression);
+            stack_push(&stack,num);
             free(n1);
             free(n2);
 
         }else if(is_operation_or_function(expression,2)){
             n1 = stack_pop(&stack);
-            num = calc_values(0,n1->value,expression);
-            stack = stack_push(stack,num);
+            num = calc_values(0,n1->var.value,expression);
+            stack_push(&stack,num);
             free(n1);
 
         }else if(strcmp(expression, var) == 0 ){
             num = x;
-            stack = stack_push(stack,num);
+            stack_push(&stack,num);
         }else{
             num = atof(expression);
-            stack = stack_push(stack,num);
+            stack_push(&stack,num);
         }
         expression = strtok(NULL," ");
     }
@@ -331,7 +284,7 @@ void riemann_sum(float inf,float sup,char *expression){
     for(int i = 0 ; i < integral_steps; i++ ){
         x_i = inf + i * delta_x;
         
-        result += calc_rpn(x_i,exp,"x");
+        result += calc_rpn_plot(x_i,exp,"x");
         strcpy(exp,expression);
     }
     result =  result * delta_x;
@@ -349,7 +302,7 @@ void sum(char *var, int inf, int sup, char *expression){
     strcpy(exp,expression);
 
     for(int i = inf; i <= sup; i++){
-        result += calc_rpn(i,exp,var);
+        result += calc_rpn_plot(i,exp,var);
         strcpy(exp,expression);
     }
 

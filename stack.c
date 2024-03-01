@@ -1,19 +1,47 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "stack.h" 
+#include "operations.h"
 
-Stack_node* stack_push(Stack_node *top, float value){
+void stack_push(Stack_node **stack, double value){
+    if( stack == NULL) return;
     Stack_node *new_rpn = malloc(sizeof(Stack_node));
+    if( new_rpn == NULL) return;
+    
+    new_rpn->var.value = value;
+    strcpy(new_rpn->var_type,"var");
 
-    if(new_rpn){
-        new_rpn->value = value;
-        new_rpn->next = top;
-        return new_rpn;
-    }else{
-        printf("Stack Error alocation\n");
+    new_rpn->next = (*stack);
+    *stack = new_rpn;
+}
+
+void stack_push_matrix(Stack_node **stack, Matrix* mtx){
+    if( stack == NULL) return;
+    Stack_node *new_mtx = malloc(sizeof(Stack_node));
+    if( new_mtx == NULL) return;
+    
+    strcpy(new_mtx->var_type,"mtx");
+    
+    new_mtx->mtx.data = (double**) malloc(mtx->rows * sizeof(double*));
+    
+    new_mtx->mtx.cols = mtx->cols;
+    new_mtx->mtx.rows = mtx->rows;
+
+    for(int i = 0; i < mtx->rows ; i++){
+        new_mtx->mtx.data[i] = (double*)malloc(mtx->cols * sizeof(double));
     }
-    return NULL;
+
+    //Copy mtx to new_mtx
+    for (int i = 0; i < mtx->rows; i++){
+        for (int j = 0; j < mtx->cols; j++){
+            new_mtx->mtx.data[i][j] = mtx->data[i][j];
+        }
+    }
+
+    new_mtx->next = (*stack);
+    *stack = new_mtx;
 }
 
 Stack_node* stack_pop(Stack_node **top){
@@ -26,35 +54,16 @@ Stack_node* stack_pop(Stack_node **top){
 }
 
 
-void stack_print(Stack_node *top){
-        while(top){
-            printf("%f ",top->value);
-            top = top->next;
+void stack_print(Stack_node *stack){
+        printf("STACK\n");
+        while(stack){
+            if(strcmp(stack->var_type,"var")==0) printf("float val: %lf\n",stack->var.value); 
+            if(strcmp(stack->var_type,"mtx") == 0) print_matrix(&stack->mtx);
+            stack = stack->next;
         }
+        printf("END STACK\n");
 } 
 
-void stack_reverse_print(Stack_node *top) {
-    Stack_node *aux_stack = NULL;
-
-    // Stack Values in a aux Stack
-    while (top) {
-        Stack_node *temp = (Stack_node *)malloc(sizeof(Stack_node));
-        temp->value = top->value;
-        temp->next = aux_stack;
-        aux_stack = temp;
-        top = top->next;
-    }
-
-    // Pop and print values aux Stack
-    while (aux_stack) {
-        printf("%f ", aux_stack->value);
-        Stack_node *temp = aux_stack;
-        aux_stack = aux_stack->next;
-        free(temp);
-    }
-
-    printf("\n");
-}
 
 void stack_pop_all(Stack_node **top){
     while(*top != NULL){

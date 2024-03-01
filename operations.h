@@ -8,7 +8,7 @@
     float calc_values(float n1,float n2, char* op);
     void calc_rpn_std(char *expression, L_node *list); // Standard implementation for calc RPN
 
-    float calc_rpn (float x,char *expression,char* var);
+    double calc_rpn_plot (double x,char *expression,char* var);
     void sum(char *var, int inf, int sup, char *expression);
 
     // Matrix
