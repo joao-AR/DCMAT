@@ -120,6 +120,90 @@ void mult_mtx_by_factor(Matrix* mtx, double factor){
     print_matrix(mtx);
 }
 
+bool matrix_dim_error(int rows1, int cols1, int rows2,int cols2,char* op){
+
+    if( ((strcmp(op,"+") == 0 || strcmp(op,"-") == 0 ) && (rows1 != rows2 || cols1 != cols2) ) 
+        || strcmp(op,"*") == 0 &&  cols1 != rows2){
+        printf("Incorrect dimensions for operator '%s' - have MATRIX [%d][%d] and MATRIX [%d][%d]",op,rows1,cols1,rows2,cols2);
+        return true;
+    }
+
+    return false;
+}
+
+void sum_matrix(Matrix *mtx1, Matrix *mtx2,Matrix *result_mtx){
+
+    //Populate Matrix
+    for(int i = 0; i < mtx1->rows; i++){
+        for(int j = 0; j < mtx1->cols; j++) result_mtx->data[i][j] = mtx1->data[i][j] + mtx2->data[i][j];
+    }
+
+    printf("\n");
+    print_matrix_var(result_mtx);
+}
+
+void sub_matrix(Matrix *mtx1, Matrix *mtx2, Matrix *result_mtx){
+    //Populate Matrix
+    for(int i = 0; i < mtx1->rows; i++){
+        for(int j = 0; j < mtx1->cols; j++) result_mtx->data[i][j] = mtx1->data[i][j] - mtx2->data[i][j];
+    }
+
+    printf("\n");
+    print_matrix_var(result_mtx);
+}
+
+void mult_matrix(Matrix *mtx1, Matrix *mtx2,Matrix *result_mtx){
+
+    //Populate Matrix
+    for (int i = 0; i < result_mtx->rows; i++) {
+        for (int j = 0; j < result_mtx->cols; j++) {
+            result_mtx->data[i][j] = 0.0;
+            for (int k = 0; k < mtx1->cols; k++) {
+                result_mtx->data[i][j] += mtx1->data[i][k] * mtx2->data[k][j];
+            }
+        }
+    }
+
+    printf("\n");
+    print_matrix_var(result_mtx);
+}   
+
+void matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
+    
+    bool error = false;
+
+    //Initialize matrix
+    Matrix *result_mtx = (Matrix*)malloc(sizeof(Matrix));
+    result_mtx->rows = mtx1->rows;
+    result_mtx->cols = mtx1->cols;
+    if(strcmp(op,"*") == 0) result_mtx->cols = mtx2->cols; // if mult [n,m] * [m,j] = [n,j]
+
+    result_mtx->data = (double**) malloc(mtx1->rows * sizeof(double*));
+        
+    for(int i = 0; i < mtx1->rows ; i++) result_mtx->data[i] = (double*)malloc(mtx1->cols * sizeof(double));
+    
+    if(strcmp(op,"+") == 0){
+        error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
+        if(error) return;
+        sum_matrix(mtx1,mtx2,result_mtx);
+
+    }else if(strcmp(op,"-") == 0){
+        error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
+        if(error) return;
+        sub_matrix(mtx1,mtx2,result_mtx);
+    }else if(strcmp(op,"*") == 0){
+        error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
+        if(error) return;
+
+        mult_matrix(mtx1,mtx2,result_mtx);
+    }
+
+    free(result_mtx);
+    return;
+}
+
+
+
 
 void calc_rpn_std(char *expression, L_node *list){ // Standard implementation for calc RPN
     double num;
@@ -137,34 +221,32 @@ void calc_rpn_std(char *expression, L_node *list){ // Standard implementation fo
     while (expression){ 
         
         dif_types = is_deferent_types(type,last_type);
-
         if(is_operation_or_function(expression,1)){
-            
             //Operation Between two var types |FLOAT MATRIX| |MATRIX FLOAT|
-            if(dif_types >= 2){ 
-                
+            
+            if(dif_types == 2 ||dif_types == 3 ){ 
                 if(is_mult_float_matrix(expression, type, last_type)){
                     n1 = stack_pop(&stack);
                     mult_mtx_by_factor(&m1->mtx,n1->value);
                     free(n1);
                 }else{
                     
-                    printf("Incorrect type for operator ’%s’ - have ",expression);
+                    printf("Incorrect type for operator '%s' - have ",expression);
                     if(dif_types == 2 ) printf("MATRIX and FLOAT\n");
                     if(dif_types == 3 ) printf("FLOAT and MATRIX\n");
                     
                 }
                 return;
 
-            }else{
-
+            }else if(dif_types == 1){ //|MATRIX MATRIX|
+                matrix_operations(&m1->mtx,&m2->mtx,expression);
+                return;
             }
-            
     
         }else if(is_operation_or_function(expression,2)){
 
         }else{
-
+            
             if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
                 last_type = type;
                 type = 2;
@@ -191,10 +273,6 @@ void calc_rpn_std(char *expression, L_node *list){ // Standard implementation fo
     // if(m2) free(m2);
     if(mtx_qtd == 0 ) print_value(num); // Only print num when thas no matrix in the expression
     return;
-}
-
-bool matrix_operations(Matrix* mtx1, Matrix mtx2){
-
 }
 
 

@@ -150,7 +150,7 @@ first:
             }else{
                 printf("Matrix limits out of boundaries.\n");
             }
-            
+
 
             // Reset 
             mtx_str = malloc(sizeof(char*));
@@ -162,11 +162,7 @@ first:
         }
     | Expression END_INPUT
         {   
-            // printf("expression = %s \n",exp_str);
-            // double calc_val = calc_rpn(0,exp_str,"x");
             calc_rpn_std(exp_str,list);
-            //printf("exp_str = %s\n",exp_str);
-            //print_value(calc_val);
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
             
@@ -188,7 +184,6 @@ first:
                 populate_matrix(&mtx, mtx_str);
             }else{
                 printf("Matrix limits out of boundaries.\n");
-
             }
             
             free(mtx_str); 
