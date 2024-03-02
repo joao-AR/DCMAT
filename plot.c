@@ -4,15 +4,15 @@
 #include <math.h>
 #include "stack.h"
 #include "operations.h"
-float pi = 3.14159265;
-float e = 2.71828182;
+double pi = 3.14159265;
+double e = 2.71828182;
 char plot [25][80]; // The plot matrix
 
 //From Settings
-    extern float h_view_lo;
-    extern float h_view_hi; 
-    extern float v_view_lo;
-    extern float v_view_hi;
+    extern double h_view_lo;
+    extern double h_view_hi; 
+    extern double v_view_lo;
+    extern double v_view_hi;
     extern int precision;
     extern int integral_steps;
     extern char* draw_axis;

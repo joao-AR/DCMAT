@@ -9,10 +9,10 @@
 #include "variables.h"
 
 //From Settings
-    extern float h_view_lo;
-    extern float h_view_hi; 
-    extern float v_view_lo;
-    extern float v_view_hi;
+    extern double h_view_lo;
+    extern double h_view_hi; 
+    extern double v_view_lo;
+    extern double v_view_hi;
     extern int precision;
     extern int integral_steps;
     extern char* draw_axis;
@@ -20,7 +20,7 @@
     extern char* connect_dots;
 //End From Settigns 
 
-void print_value(float num){
+void print_value(double num){ 
     if(precision == 0){
         printf("%.0f\n",num);
     }else if(precision == 1){
@@ -33,14 +33,18 @@ void print_value(float num){
         printf("%.4f\n",num);
     }else if(precision == 5){
         printf("%.5f\n",num);
-    }else{
+    }else if(precision == 6){
         printf("%.6f\n",num);
+    }else if(precision == 7){
+        printf("%.7f\n",num);
+    }else if(precision == 8){
+        printf("%.8f\n",num);
     }
 }
 
-float calc_values(float n1,float n2, char* op){
+double calc_values(double n1,double n2, char* op){
     
-    float result = 0;
+    double result = 0;
 
     if(strcmp(op,"+") == 0){
         result = n1 + n2;
@@ -272,10 +276,10 @@ double calc_rpn_plot (double x,char *expression,char* var){
     return num;
 }
 
-void riemann_sum(float inf,float sup,char *expression){
-    float delta_x = (sup - inf) / integral_steps;
-    float result = 0.0;
-    float x_i = 0.0; // median point
+void riemann_sum(double inf,double sup,char *expression){
+    double delta_x = (sup - inf) / integral_steps;
+    double result = 0.0;
+    double x_i = 0.0; // median point
     
     size_t len =  strlen(expression);
     char *exp = (char*)malloc(len+1);
@@ -459,7 +463,7 @@ double solve_determinant(Matrix mtx, int n){
 
 // ---------- Strings Operations
 
-char* to_string(float value){
+char* to_string(double value){ 
     // Determine the maximum size needed for the string
     int size = snprintf(NULL, 0, "%f", value);
 

@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 
-float h_view_lo = -6.5;
-float h_view_hi =  6.5;
+double h_view_lo = -6.5;
+double h_view_hi =  6.5;
 
-float v_view_lo = -3.5;
-float v_view_hi =  3.5;
+double v_view_lo = -3.5;
+double v_view_hi =  3.5;
 
 int precision = 6;
 int integral_steps = 1000;
@@ -31,7 +31,7 @@ void print_settings(){
     printf("Connect Dots: %s\n",connect_dots);
 }
 
-void set_view(float lo, float hi,char type){
+void set_view(double lo, double hi,char type){
 
     if(lo > hi){
         printf("ERROR: %c_view_lo most be smaller than %c_view_hi\n",type,type);
@@ -59,11 +59,11 @@ void set_connect_dots(char* value){
     connect_dots = value;
 }
 
-void set_integral_steps(float value){
+void set_integral_steps(double value){
     integral_steps = (int)value;
 }
 
-void set_float_precision(float value){
+void set_float_precision(double value){
     if(value <= 8){
         precision = (int)value;
     }else{

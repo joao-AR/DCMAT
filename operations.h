@@ -3,9 +3,9 @@
 
     #include "variables.h"
     //Math functions
-    void print_value(float num);
-    void riemann_sum(float inf,float sup,char *expression);
-    float calc_values(float n1,float n2, char* op);
+    void print_value(double num);
+    void riemann_sum(double inf,double sup,char *expression);
+    double calc_values(double n1,double n2, char* op);
     void calc_rpn_std(char *expression, L_node *list); // Standard implementation for calc RPN
 
     double calc_rpn_plot (double x,char *expression,char* var);
@@ -22,6 +22,6 @@
         
     //Strings
     char* concat_strings(const char* str1, const char* str2);
-    char* to_string(float value);
+    char* to_string(double value);
 
 #endif

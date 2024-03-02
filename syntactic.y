@@ -20,14 +20,14 @@
 	extern int current_char_index;
     // END From lex.l
 
-    extern float pi;
-    extern float e;
+    extern double pi;
+    extern double e;
 
     //From Settings
-    extern float h_view_lo;
-    extern float h_view_hi; 
-    extern float v_view_lo;
-    extern float v_view_hi;
+    extern double h_view_lo;
+    extern double h_view_hi; 
+    extern double v_view_lo;
+    extern double v_view_hi;
     extern int precision;
     extern int integral_steps;
     extern char* draw_axis;
@@ -318,8 +318,6 @@ Expression:
                 printf("Var not Found %s\n",$1);
                 return 0;
             }
-            
-
         }
     |Function
     |Expression_term
