@@ -358,15 +358,55 @@ void populate_matrix(Matrix* mtx, char* mtx_str) {
     }
 }
 
-// Function to print the matrix
-void print_matrix(const Matrix* mtx) {
-    
+int calc_size_matrix(const Matrix* mtx){
+    int size_matrix = 0;
+    int max_size_matrix = 0;
     for (int l = 0; l < mtx->rows; l++) {
         for (int m = 0; m < mtx->cols; m++) {
-            printf("%12.8lf ", mtx->data[l][m]);
+            size_matrix = size_matrix + strlen(to_string(mtx->data[l][m])) + 1;
         }
-        printf("\n");
+        if(size_matrix > max_size_matrix){
+            max_size_matrix = size_matrix;
+        }
+        size_matrix = 0;
     }
+    return max_size_matrix;
+}
+
+void print_matrix_container(int size){
+    printf("+-");
+    for(int i = 0; i < size; i++){
+        printf(" ");
+    }
+    printf("-+\n");
+}
+
+void print_bar_matrix(const Matrix* mtx,int row, int max_size){
+    int spaces = 0;
+
+    for (int m = 0; m < mtx->cols; m++) {
+        spaces = spaces + strlen(to_string(mtx->data[row][m]));
+    }
+    // printf("%d - %d\n",max_size,spaces );
+    spaces = max_size - spaces;
+    for(int i = 0; i < spaces-1; i++){
+        printf(" ");
+    }
+    printf("|\n");
+}   
+// Function to print the matrix
+void print_matrix(const Matrix* mtx) {
+    int size_matrix = calc_size_matrix(mtx);
+    printf("\n");
+    print_matrix_container(size_matrix);
+    for (int l = 0; l < mtx->rows; l++) {
+        printf("| ");
+        for (int m = 0; m < mtx->cols; m++) {
+            printf("%lf ",mtx->data[l][m]);
+        }
+        print_bar_matrix(mtx,l,size_matrix);
+    }
+    print_matrix_container(size_matrix);
 }
 
 
