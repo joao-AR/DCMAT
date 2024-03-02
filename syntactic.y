@@ -74,8 +74,8 @@
     char *sval;
 }
 
-%type <dval> Expression Factor Function 
-%type <sval> Rpn_expression Rpn_func Rpn_term Sum
+%type <dval> Expression Expression_term Factor Function 
+%type <sval> Sum
 %locations
 %define parse.lac full
 %define parse.error verbose
@@ -322,38 +322,23 @@ Expression:
 
         }
     |Function
+    |Expression_term
     |Factor 
         {
-            $$ = $1; 
             aux_string = to_string($1); 
             exp_str = concat_strings(exp_str,aux_string);
-        }
-    |X 
-        {
-            exp_str = concat_strings(exp_str,"x");
-        }
-    |PI 
-        {
-            $$ = pi ;
-            aux_string = to_string(pi);
-            exp_str = concat_strings(exp_str,aux_string);
-        }
-    |E 
-        {
-            $$ = e;
-            aux_string = to_string(e);
-            exp_str = concat_strings(exp_str,aux_string);
+            rpn_string = concat_strings(rpn_string,aux_string); 
         }
     |Expression PLUS Expression 
         {
-            $$ = $1 + $3; 
             exp_str = concat_strings(exp_str,"+");
+            rpn_string = concat_strings(rpn_string,"+"); 
 
         }
     |Expression MINUS Expression 
         {
-            $$ = $1 - $3; 
             exp_str = concat_strings(exp_str,"-"); 
+            rpn_string = concat_strings(rpn_string,"-"); 
         }
     |Expression DIV Expression  
         {
@@ -361,24 +346,24 @@ Expression:
                 printf("ERROR division by ZERO\n");
                 return 0;
             }else{
-                $$ = $1 / $3;
                 exp_str = concat_strings(exp_str,"/");
+                rpn_string = concat_strings(rpn_string,"/"); 
             }
         }
     |Expression MULT Expression 
         {
-            $$ = $1 * $3;
             exp_str = concat_strings(exp_str,"*"); 
+            rpn_string = concat_strings(rpn_string,"*"); 
         }
     |Expression POW Expression 
         {
-            $$ = pow($1,$3);
             exp_str = concat_strings(exp_str,"^"); 
+            rpn_string = concat_strings(rpn_string,"^"); 
         }
     |Expression REST Expression 
         {
-            $$ = fmod($1,$3);
             exp_str = concat_strings(exp_str,"%");
+            rpn_string = concat_strings(rpn_string,"%"); 
         }
     |OP Expression CP 
         {
@@ -386,23 +371,49 @@ Expression:
         }
 ;
 
+Expression_term:
+    X 
+        {
+            exp_str = concat_strings(exp_str,"x");
+            rpn_string = concat_strings(rpn_string,"x"); 
+        }
+    |PI 
+        {
+            aux_string = to_string(pi);
+            exp_str = concat_strings(exp_str,aux_string);
+            rpn_string = concat_strings(rpn_string,aux_string); 
+        }
+    |E 
+        {
+            aux_string = to_string(e);
+            exp_str = concat_strings(exp_str,aux_string);
+            rpn_string = concat_strings(rpn_string,aux_string); 
+        }
+;
+
+
 Function: 
     SEN OP Expression CP 
         {   
             exp_str = concat_strings(exp_str,"SEN"); 
-            $$ = sin($3 * pi / 180); // Convert degress to radians
+            rpn_string = concat_strings(rpn_string,"SEN"); 
         }
     
     | COS OP Expression CP 
         { 
             exp_str = concat_strings(exp_str,"COS"); 
-            $$ = cos($3 * pi / 180); // Convert degress to radians
+            rpn_string = concat_strings(rpn_string,"COS"); 
         }
     | TAN OP Expression CP 
         {   
             exp_str = concat_strings(exp_str,"TAN"); 
-            $$ = tan($3 * pi / 180); // Convert degress to radians
+            rpn_string = concat_strings(rpn_string,"TAN"); 
         }
+    | ABS OP Expression CP 
+        {
+            exp_str = concat_strings(exp_str,"ABS"); 
+            rpn_string = concat_strings(rpn_string,"ABS"); 
+        } 
 ;
 
 Factor: 
@@ -436,88 +447,14 @@ Plot:
 ;
 //------------- END PLOT
 
+
 //------------- RPN
 
-Rpn: RPN OP Rpn_expression CP SEMI END_INPUT 
+Rpn: RPN OP Expression CP SEMI END_INPUT 
     {   
         printf("%s\n",rpn_string);
         return 0;
     }
-;
-
-Rpn_term:
-    VAR {
-        rpn_string = concat_strings(rpn_string,$1);  
-    }
-    |X 
-        {
-            rpn_string = concat_strings(rpn_string,"x");
-        }
-    |PI 
-        {
-            aux_string = to_string(pi);
-            rpn_string = concat_strings(rpn_string,aux_string);  
-        }
-    |E 
-        {   
-            aux_string = to_string(e);
-            rpn_string = concat_strings(rpn_string,aux_string);   
-        }
-;
-
-Rpn_expression:
-    Rpn_term
-    |Rpn_func
-    |Factor 
-        {   
-            aux_string = to_string($1);
-            rpn_string = concat_strings(rpn_string,aux_string);
-        }
-    
-    |Rpn_expression PLUS Rpn_expression 
-        {
-            rpn_string = concat_strings(rpn_string,"+"); 
-        }
-    |Rpn_expression MINUS Rpn_expression 
-        {
-            rpn_string = concat_strings(rpn_string,"-"); 
-        }
-    |Rpn_expression DIV Rpn_expression  
-        {
-            rpn_string = concat_strings(rpn_string,"/"); 
-        }
-    |Rpn_expression MULT Rpn_expression 
-        {
-            rpn_string = concat_strings(rpn_string,"*"); 
-        }
-    |Rpn_expression POW Rpn_expression 
-        {
-            rpn_string = concat_strings(rpn_string,"^"); 
-        }
-    |Rpn_expression REST Rpn_expression 
-        {
-            rpn_string = concat_strings(rpn_string,"%"); 
-        }
-    |OP Rpn_expression CP 
-        {
-            $$ = $2;
-        }
-;
-
-Rpn_func:
-    SEN OP Rpn_expression CP 
-        {   
-            rpn_string = concat_strings(rpn_string,"SEN"); 
-        }
-    
-    | COS OP Rpn_expression CP 
-        {   
-            rpn_string = concat_strings(rpn_string,"COS"); 
-        }
-    | TAN OP Rpn_expression CP 
-        {   
-            rpn_string = concat_strings(rpn_string,"TAN");  
-        }
 ;
 
 //------------- END RPN
@@ -656,10 +593,6 @@ Attr_val_simb:
 Attr_val_matrix: 
     VAR ATRI OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT
         {   
-            
-            // printf("List print\n");
-            // list_print(list);
-            // printf("\nENDList print\n");
             name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
             strcpy(name_mtx_var,$1);
 
@@ -730,6 +663,7 @@ void free_all(){
     free_matrix(&mtx_var);
     free(remove_node_list);
 }
+
 void yyerror(char const *s){
     int i;
 	char c;

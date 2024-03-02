@@ -55,16 +55,17 @@ float calc_values(float n1,float n2, char* op){
     }else if(strcmp(op,"^") == 0){
         result = pow(n1,n2);
         // printf("\npow(%f,%f) = %f\n",n1,n2,result);
-    }else if(strcmp(op,"%%") == 0){
+    }else if(strcmp(op,"%") == 0){
         result =  fmod(n1,n2);
     }else if(strcmp(op, "SEN") == 0){
         result = sin(n2);
         // printf("-> Result sin(%f) = %f\n",n2,result);
-
     }else if(strcmp(op, "COS") == 0){
         result = cos(n2);
     }else if(strcmp(op, "TAN") == 0){
         result = tan(n2);
+    }else if(strcmp(op, "ABS") == 0){
+        result = fabs(n2);
     }
     return result;
 }
@@ -73,11 +74,11 @@ bool is_operation_or_function(char* string, int type){
 
     // Simple Math Operations
     if(type == 1){
-        if(strcmp(string, "+") == 0 || strcmp(string, "-") == 0 || strcmp(string, "*") == 0 || strcmp(string, "/") == 0 || strcmp(string, "^") == 0 || strcmp(string, "%%") == 0){
+        if(strcmp(string, "+") == 0 || strcmp(string, "-") == 0 || strcmp(string, "*") == 0 || strcmp(string, "/") == 0 || strcmp(string, "^") == 0 || strcmp(string, "%") == 0){
             return true;
         }
     }else if(type == 2){ // Functions
-        if(strcmp(string, "SEN") == 0 || strcmp(string, "COS") == 0 || strcmp(string, "TAN") == 0){
+        if(strcmp(string, "SEN") == 0 || strcmp(string, "COS") == 0 || strcmp(string, "TAN") == 0 ||strcmp(string, "ABS") == 0){
             return true;
         }
     }
