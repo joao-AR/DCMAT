@@ -209,6 +209,7 @@ first:
         {   
             free(rpn_string); 
             rpn_string = malloc(sizeof(char*));
+            strcpy(rpn_string,"");
         }
     | Set_integral_steps 
     | Show_matrix 
@@ -366,7 +367,12 @@ Expression:
                 printf("Undefined symbol [%s]\n",$1);
                 return 0;
             }
-            if(is_sum){exp_str = concat_strings(exp_str,$1);}
+
+            if(is_sum){
+                if(var_node == NULL){
+                    exp_str = concat_strings(exp_str,$1);
+                }   
+            }
             rpn_string = concat_strings(rpn_string,$1); 
         }
     |MINUS VAR 
@@ -381,11 +387,16 @@ Expression:
                 exp_str = concat_strings(exp_str,var_node->var_name);
                 exp_str = concat_strings(exp_str,"-1 *");
 
-            }else if(is_rpn == false){
+            }else if(is_rpn == false && is_sum == false){
                 printf("Undefined symbol [%s]\n",$2);
                 return 0;
             }
-            
+
+            if(is_sum){
+                if(var_node == NULL){
+                    exp_str = concat_strings(exp_str,$2);
+                }   
+            }
             rpn_string = concat_strings(rpn_string,$2); 
             rpn_string = concat_strings(rpn_string,$2); 
         }
@@ -535,6 +546,7 @@ Plot:
 Rpn:
     {
         is_rpn = true;
+        
     }
     RPN OP Expression CP SEMI END_INPUT 
     {      
@@ -561,7 +573,7 @@ Integrate:
 Sum:
     SUM OP VAR COMMA INTEGER INTERVAL INTEGER COMMA Expression CP SEMI END_INPUT
         {   
-            sum($3, $5,$7,exp_str);
+            sum($3,$5,$7,exp_str);
             is_sum = false;
             return 0;
         }
@@ -732,6 +744,7 @@ int main(int argc, char** argv){
     exp_str_last = malloc(sizeof(char*));
     while (1) {
         rpn_string = malloc(sizeof(char*));
+        strcpy(rpn_string,"");
         exp_str = malloc(sizeof(char*));
         mtx_str = malloc(sizeof(char*));
         printf("> ");
