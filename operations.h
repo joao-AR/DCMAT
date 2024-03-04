@@ -19,7 +19,7 @@
         double solve_determinant(Matrix mtx, int n);
         void submatrix(Matrix mtx, Matrix *temp ,int p, int q, int n);
         bool is_mult_float_matrix(char* op, int type, int last_type);
-        
+        void solve_linear_system(Matrix *mtx);
     //Strings
     char* concat_strings(const char* str1, const char* str2);
     char* to_string(double value);

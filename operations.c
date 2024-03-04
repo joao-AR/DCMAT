@@ -398,6 +398,7 @@ void print_bar_matrix(const Matrix* mtx,int row, int max_size){
     }
     printf("|\n");
 }   
+
 // Function to print the matrix
 void print_matrix(const Matrix* mtx) {
     int size_matrix = calc_size_matrix(mtx);
@@ -460,6 +461,69 @@ double solve_determinant(Matrix mtx, int n){
     return det_result;
 }
 // ---------- END Solve Determiant
+
+
+void solve_linear_system(Matrix *mtx) {
+    int cols = mtx->cols;
+    int rows = mtx->rows;
+
+    for (int i = 0; i < rows; i++) {
+        // Partial pivoting to ensure a non-zero pivot
+        for (int k = i + 1; k < rows; k++) {
+            if (mtx->data[k][i] > mtx->data[i][i]) {
+                for (int j = 0; j <= rows; j++) {
+                    double temp = mtx->data[i][j];
+                    mtx->data[i][j] = mtx->data[k][j];
+                    mtx->data[k][j] = temp;
+                }
+            }
+        }
+
+        // Gauss
+        for (int k = i + 1; k < rows; k++) {
+            double factor = mtx->data[k][i] / mtx->data[i][i];
+            for (int j = i; j <= rows; j++) {
+                mtx->data[k][j] -= factor * mtx->data[i][j];
+            }
+        }
+    }
+
+    // Is indeterminate System ?
+    for (int i = 0; i < rows; i++) {
+        int isZeroRow = 1;
+        for (int j = 0; j <= rows; j++) {
+            if (mtx->data[i][j] != 0) {
+                isZeroRow = 0;
+                break;
+            }
+        }
+        if (isZeroRow && mtx->data[i][rows] == 0) {
+            printf("SPI - The Linear System has infinitely many solutions\n");
+            return;
+        }
+    }
+
+    // Find Solutions
+    double solutions[rows];
+    for (int i = rows - 1; i >= 0; i--) {
+        solutions[i] = mtx->data[i][rows] / mtx->data[i][i];
+        for (int j = i - 1; j >= 0; j--) {
+            mtx->data[j][rows] -= mtx->data[j][i] * solutions[i];
+        }
+    }
+
+    if(isinf(solutions[0])){
+        printf("SI - The Linear System has no solution\n");
+        return;
+    }
+
+    // Print Solution
+    printf("\n");
+    for (int i = 0; i < rows; i++) {
+        printf("%f\n", solutions[i]);
+    }
+    printf("\n");
+}
 
 // ---------- Strings Operations
 

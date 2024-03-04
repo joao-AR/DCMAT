@@ -571,7 +571,7 @@ Solve_determinant:
 Solve_linear_system: 
     SOLVE LINEAR_SYSTEM SEMI END_INPUT 
         {
-            printf("SOLVE linear SYSTEM\n"); 
+            solve_linear_system(&mtx);
             return 0;
         }
 ;
