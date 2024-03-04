@@ -357,6 +357,7 @@ Expression:
             if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
                 aux_string = to_string(var_node->var.value);
                 exp_str = concat_strings(exp_str,aux_string);
+                $$ = var_node->var.value;
 
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
                 exp_str = concat_strings(exp_str,var_node->var_name);
@@ -391,19 +392,22 @@ Expression:
     |Function
     |Expression_term
     |Factor 
-        {
+        {   
+            $$ = $1;
             aux_string = to_string($1); 
             exp_str = concat_strings(exp_str,aux_string);
             rpn_string = concat_strings(rpn_string,aux_string); 
         }
     |Expression PLUS Expression 
-        {
+        {   
+            $$ = $1 + $3;
             exp_str = concat_strings(exp_str,"+");
             rpn_string = concat_strings(rpn_string,"+"); 
 
         }
     |Expression MINUS Expression 
-        {
+        {   
+            $$ = $1 - $3;
             exp_str = concat_strings(exp_str,"-"); 
             rpn_string = concat_strings(rpn_string,"-"); 
         }
@@ -413,22 +417,26 @@ Expression:
                 printf("ERROR division by ZERO\n");
                 return 0;
             }else{
+                $$ = $1 / $3;
                 exp_str = concat_strings(exp_str,"/");
                 rpn_string = concat_strings(rpn_string,"/"); 
             }
         }
     |Expression MULT Expression 
-        {
+        {   
+             $$ = $1 * $3;
             exp_str = concat_strings(exp_str,"*"); 
             rpn_string = concat_strings(rpn_string,"*"); 
         }
     |Expression POW Expression 
-        {
+        {   
+            $$ = pow($1,$3);
             exp_str = concat_strings(exp_str,"^"); 
             rpn_string = concat_strings(rpn_string,"^"); 
         }
     |Expression REST Expression 
-        {
+        {   
+            $$ = fmod($1,$3);
             exp_str = concat_strings(exp_str,"%");
             rpn_string = concat_strings(rpn_string,"%"); 
         }
@@ -758,9 +766,11 @@ void yyerror(char const *s){
 
 
 void print_about(){
-    printf("+----------------------------------------------+\n");    
+    printf("\n+----------------------------------------------+\n");
+    printf("|                                              |\n");    
+    printf("|          Matricula:   202000560523           |\n");
     printf("|          João Pedro Alves Rodrigues          |\n");
-    printf("|          Matricula:   000000000000           |\n");
+    printf("|                                              |\n");    
     printf("+----------------------------------------------+\n");
 }
 
