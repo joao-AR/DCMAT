@@ -363,7 +363,7 @@ Expression:
                 exp_str = concat_strings(exp_str,var_node->var_name);
 
             }else if(is_rpn == false && is_sum == false){
-                printf("Var not Found %s\n",$1);
+                printf("Undefined symbol [%s]\n",$1);
                 return 0;
             }
             if(is_sum){exp_str = concat_strings(exp_str,$1);}
@@ -382,7 +382,7 @@ Expression:
                 exp_str = concat_strings(exp_str,"-1 *");
 
             }else if(is_rpn == false){
-                printf("Var not Found %s\n",$2);
+                printf("Undefined symbol [%s]\n",$2);
                 return 0;
             }
             
