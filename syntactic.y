@@ -171,7 +171,6 @@ first:
         }
     | PLUS Expression END_INPUT
         {   
-            
             calc_rpn_std(exp_str,list);
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
@@ -257,6 +256,39 @@ Set_View:
     |SET V_VIEW Factor INTERVAL Factor SEMI END_INPUT  // set v_view [valor float] :  [valor float];
         {
             set_view($3,$5,'v');
+            return 0;
+        }
+    |SET H_VIEW PLUS Factor INTERVAL Factor SEMI END_INPUT // set h_view [valor float] :  [valor float];
+        { 
+            set_view($4,$6,'h'); 
+            return 0;
+        }
+    
+    |SET V_VIEW PLUS Factor INTERVAL Factor SEMI END_INPUT  // set v_view [valor float] :  [valor float];
+        {
+            set_view($4,$6,'v');
+            return 0;
+        }
+    |SET H_VIEW  Factor  INTERVAL  PLUS Factor  SEMI END_INPUT // set h_view [valor float] :  [valor float];
+        { 
+            set_view($3,$6,'h'); 
+            return 0;
+        }
+    
+    |SET V_VIEW Factor INTERVAL PLUS Factor SEMI END_INPUT  // set v_view [valor float] :  [valor float];
+        {
+            set_view($3,$6,'v');
+            return 0;
+        }
+    |SET H_VIEW PLUS Factor INTERVAL PLUS Factor  SEMI END_INPUT // set h_view [valor float] :  [valor float];
+        { 
+            set_view($4,$7,'h'); 
+            return 0;
+        }
+    
+    |SET V_VIEW PLUS Factor INTERVAL PLUS Factor SEMI END_INPUT  // set v_view [valor float] :  [valor float];
+        {
+            set_view($4,$7,'v');
             return 0;
         }
 ;
