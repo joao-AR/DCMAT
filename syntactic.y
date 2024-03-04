@@ -168,7 +168,17 @@ first:
             
             exp_str = malloc(sizeof(char*));
             return 0;
-        } 
+        }
+    | PLUS Expression END_INPUT
+        {   
+            
+            calc_rpn_std(exp_str,list);
+            strcpy(exp_str_last,exp_str);
+            free(exp_str); 
+            
+            exp_str = malloc(sizeof(char*));
+            return 0;
+        }
     | Show_Settings 
     | Reset_Settings 
     | Set_View
@@ -310,12 +320,35 @@ Expression:
             if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
                 aux_string = to_string(var_node->var.value);
                 exp_str = concat_strings(exp_str,aux_string);
+                rpn_string = concat_strings(rpn_string,aux_string); 
+
+            }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
+                exp_str = concat_strings(exp_str,var_node->var_name);
+                rpn_string = concat_strings(rpn_string,var_node->var_name); 
+
+            }else{
+                printf("Var not Found %s\n",$1);
+                return 0;
+            }
+        }
+    |MINUS VAR 
+        {
+            L_node *var_node = list_seach(list, $2);
+            if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
+                aux_string = to_string(var_node->var.value);
+                rpn_string = concat_strings(rpn_string,aux_string); 
+                exp_str = concat_strings(exp_str,aux_string);
+                rpn_string = concat_strings(rpn_string,"-1 *"); 
+                exp_str = concat_strings(exp_str,"-1 *");
             
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
                 exp_str = concat_strings(exp_str,var_node->var_name);
-            
+                rpn_string = concat_strings(rpn_string,var_node->var_name); 
+                rpn_string = concat_strings(rpn_string,"-1 *"); 
+                exp_str = concat_strings(exp_str,"-1 *");
+
             }else{
-                printf("Var not Found %s\n",$1);
+                printf("Var not Found %s\n",$2);
                 return 0;
             }
         }
@@ -374,6 +407,13 @@ Expression_term:
         {
             exp_str = concat_strings(exp_str,"x");
             rpn_string = concat_strings(rpn_string,"x"); 
+        }
+    | MINUS X 
+        {   
+            exp_str = concat_strings(exp_str,"x");
+            rpn_string = concat_strings(rpn_string,"x"); 
+             rpn_string = concat_strings(rpn_string,"-1 *"); 
+                exp_str = concat_strings(exp_str,"-1 *");
         }
     |PI 
         {
