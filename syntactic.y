@@ -42,6 +42,7 @@
     char* aux_string;
     char* rpn_string;
     bool is_rpn = false;
+    bool is_sum = false;
     char* exp_str;
     char* exp_str_last; // Used to save the last expression, plot;
     
@@ -152,7 +153,6 @@ first:
                 printf("Matrix limits out of boundaries.\n");
             }
 
-
             // Reset 
             mtx_str = malloc(sizeof(char*));
             g_mtx_cols = 1;
@@ -204,7 +204,7 @@ first:
             return 0;
         }
     | Integrate 
-    | Sum 
+    | Inc_Sum  
     | Rpn 
         {   
             free(rpn_string); 
@@ -220,7 +220,11 @@ first:
     | Set_float_precision
     | END_INPUT {return 0;}
 ;
-
+Inc_Sum:
+    {
+        is_sum = true;
+    } 
+    Sum
 Quit: 
     QUIT 
     {   
@@ -357,10 +361,11 @@ Expression:
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
                 exp_str = concat_strings(exp_str,var_node->var_name);
 
-            }else if(is_rpn == false){
+            }else if(is_rpn == false && is_sum == false){
                 printf("Var not Found %s\n",$1);
                 return 0;
             }
+            if(is_sum){exp_str = concat_strings(exp_str,$1);}
             rpn_string = concat_strings(rpn_string,$1); 
         }
     |MINUS VAR 
@@ -545,10 +550,11 @@ Integrate:
         }
 ; 
 
-Sum: 
+Sum:
     SUM OP VAR COMMA INTEGER INTERVAL INTEGER COMMA Expression CP SEMI END_INPUT
         {   
             sum($3, $5,$7,exp_str);
+            is_sum = false;
             return 0;
         }
 ; 
