@@ -41,6 +41,7 @@
     //Custom VAR
     char* aux_string;
     char* rpn_string;
+    bool is_rpn = false;
     char* exp_str;
     char* exp_str_last; // Used to save the last expression, plot;
     
@@ -205,7 +206,7 @@ first:
     | Integrate 
     | Sum 
     | Rpn 
-        { 
+        {   
             free(rpn_string); 
             rpn_string = malloc(sizeof(char*));
         }
@@ -352,37 +353,35 @@ Expression:
             if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
                 aux_string = to_string(var_node->var.value);
                 exp_str = concat_strings(exp_str,aux_string);
-                rpn_string = concat_strings(rpn_string,aux_string); 
 
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
                 exp_str = concat_strings(exp_str,var_node->var_name);
-                rpn_string = concat_strings(rpn_string,var_node->var_name); 
 
-            }else{
+            }else if(is_rpn == false){
                 printf("Var not Found %s\n",$1);
                 return 0;
             }
+            rpn_string = concat_strings(rpn_string,$1); 
         }
     |MINUS VAR 
         {
             L_node *var_node = list_seach(list, $2);
             if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
                 aux_string = to_string(var_node->var.value);
-                rpn_string = concat_strings(rpn_string,aux_string); 
                 exp_str = concat_strings(exp_str,aux_string);
-                rpn_string = concat_strings(rpn_string,"-1 *"); 
                 exp_str = concat_strings(exp_str,"-1 *");
             
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
                 exp_str = concat_strings(exp_str,var_node->var_name);
-                rpn_string = concat_strings(rpn_string,var_node->var_name); 
-                rpn_string = concat_strings(rpn_string,"-1 *"); 
                 exp_str = concat_strings(exp_str,"-1 *");
 
-            }else{
+            }else if(is_rpn == false){
                 printf("Var not Found %s\n",$2);
                 return 0;
             }
+            
+            rpn_string = concat_strings(rpn_string,$2); 
+            rpn_string = concat_strings(rpn_string,$2); 
         }
     |Function
     |Expression_term
@@ -520,9 +519,14 @@ Plot:
 
 //------------- RPN
 
-Rpn: RPN OP Expression CP SEMI END_INPUT 
-    {   
+Rpn:
+    {
+        is_rpn = true;
+    }
+    RPN OP Expression CP SEMI END_INPUT 
+    {      
         printf("%s\n",rpn_string);
+        is_rpn = false;
         return 0;
     }
 ;
