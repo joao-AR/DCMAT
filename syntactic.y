@@ -166,8 +166,8 @@ first:
             calc_rpn_std(exp_str,list);
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
-            
             exp_str = malloc(sizeof(char*));
+            strcpy(exp_str,"");
             return 0;
         }
     | PLUS Expression END_INPUT
@@ -175,8 +175,8 @@ first:
             calc_rpn_std(exp_str,list);
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
-            
             exp_str = malloc(sizeof(char*));
+            strcpy(exp_str,"");
             return 0;
         }
     | Show_Settings 
@@ -746,6 +746,7 @@ int main(int argc, char** argv){
         rpn_string = malloc(sizeof(char*));
         strcpy(rpn_string,"");
         exp_str = malloc(sizeof(char*));
+        strcpy(exp_str,"");
         mtx_str = malloc(sizeof(char*));
         printf("> ");
         yyparse();

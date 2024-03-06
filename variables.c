@@ -133,16 +133,15 @@ void list_print_var(L_node *node, char* name_var){
     while (node){
         if(strcmp(node->var_name,name_var)==0){
             if(strcmp(node->var_type,"var")==0 ){
-                printf("%s - FLOAT\n",node->var_name);
+                printf("%s = %lf\n",node->var_name,node->var.value);
             }else{
-                printf("%s - MATRIX [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
                 print_matrix_var(&node->mtx);
             }
             return;
         }
         node = node->next;
     }
-    printf("Variable Not Found!\n");
+    printf("Undefined symbol\n");
     return;
 }
 

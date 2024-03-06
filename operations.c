@@ -93,8 +93,8 @@ bool is_operation_or_function(char* string, int type){
 bool matrix_dim_error(int rows1, int cols1, int rows2,int cols2,char* op){
 
     if( ((strcmp(op,"+") == 0 || strcmp(op,"-") == 0 ) && (rows1 != rows2 || cols1 != cols2) ) 
-        || strcmp(op,"*") == 0 &&  cols1 != rows2){
-        printf("Incorrect dimensions for operator '%s' - have MATRIX [%d][%d] and MATRIX [%d][%d]\n",op,rows1,cols1,rows2,cols2);
+        || strcmp(op,"*") == 0 &&  cols2 != rows1){
+        printf("Incorrect dimensions for operator '%s' - have MATRIX [%d][%d] and MATRIX [%d][%d]\n",op,rows2,cols2,rows1,cols1);
         return true;
     }
 
@@ -145,12 +145,18 @@ Matrix* matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
 
     //Initialize matrix
     Matrix *result_mtx = (Matrix*)malloc(sizeof(Matrix));
-    result_mtx->rows = mtx1->rows;
-    result_mtx->cols = mtx1->cols;
-    if(strcmp(op,"*") == 0) result_mtx->cols = mtx2->cols; // if mult [n,m] * [m,j] = [n,j]
-
-    result_mtx->data = (double**) malloc(mtx1->rows * sizeof(double*));
-        
+    
+    
+    if(strcmp(op,"*") == 0){
+        result_mtx->rows = mtx2->rows;
+        result_mtx->cols = mtx1->cols; // if mult [n,m] * [m,j] = [n,j]
+        result_mtx->data = (double**) malloc(mtx2->rows * sizeof(double*));
+    }else{
+        result_mtx->rows = mtx1->rows;
+        result_mtx->cols = mtx1->cols;
+        result_mtx->data = (double**) malloc(mtx1->rows * sizeof(double*));
+    }
+    
     for(int i = 0; i < mtx1->rows ; i++) result_mtx->data[i] = (double*)malloc(mtx1->cols * sizeof(double));
     
     if(strcmp(op,"+") == 0){
@@ -165,7 +171,7 @@ Matrix* matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
     }else if(strcmp(op,"*") == 0){
         error = matrix_dim_error(mtx1->rows,mtx1->cols,mtx2->rows,mtx2->cols,op );
         if(error) return NULL;
-        mult_matrix(mtx1,mtx2,result_mtx);
+        mult_matrix(mtx2,mtx1,result_mtx);
     }else{
         printf("Not accepted MATRIX operation '%s' \n",op);
     }
@@ -379,7 +385,7 @@ int calc_size_matrix(const Matrix* mtx){
 
 void print_matrix_container(int size){
     printf("+-");
-    for(int i = 0; i < size; i++){
+    for(int i = 0; i < size -2; i++){
         printf(" ");
     }
     printf("-+\n");
@@ -392,8 +398,8 @@ void print_bar_matrix(const Matrix* mtx,int row, int max_size){
         spaces = spaces + strlen(to_string(mtx->data[row][m]));
     }
     // printf("%d - %d\n",max_size,spaces );
-    spaces = max_size - spaces;
-    for(int i = 0; i < spaces-1; i++){
+    spaces = max_size -  spaces;
+    for(int i = 0; i < spaces-4; i++){
         printf(" ");
     }
     printf("|\n");
@@ -405,9 +411,9 @@ void print_matrix(const Matrix* mtx) {
     printf("\n");
     print_matrix_container(size_matrix);
     for (int l = 0; l < mtx->rows; l++) {
-        printf("| ");
+        printf("| " );
         for (int m = 0; m < mtx->cols; m++) {
-            printf("%lf ",mtx->data[l][m]);
+            printf("%f ",mtx->data[l][m]);
         }
         print_bar_matrix(mtx,l,size_matrix);
     }
