@@ -2,11 +2,13 @@
 #define OPERATIONS_H
 
     #include "variables.h"
+    #include "stack.h"
     //Math functions
     void print_value(double num);
     void riemann_sum(double inf,double sup,char *expression);
     double calc_values(double n1,double n2, char* op);
     void calc_rpn_std(char *expression, L_node *list); // Standard implementation for calc RPN
+    Stack_node* calc_rpn_attr(char *expression, L_node *list);
 
     double calc_rpn_plot (double x,char *expression,char* var);
     void sum(char *var, int inf, int sup, char *expression);
@@ -23,5 +25,7 @@
     //Strings
     char* concat_strings(const char* str1, const char* str2);
     char* to_string(double value);
+    char* matrix_to_string(Matrix *mtx);
+
 
 #endif

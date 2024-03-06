@@ -246,6 +246,70 @@ void calc_rpn_std(char *expression, L_node *list){ // Standard implementation fo
     return;
 }
 
+Stack_node* calc_rpn_attr(char *expression, L_node *list){
+    double num;
+    Stack_node *n1, *n2, *stack = NULL;
+    
+    L_node *m1,*m2;
+
+    Matrix *n3;
+    
+    expression = strtok(expression," ");
+
+    while (expression){ 
+        if(is_operation_or_function(expression,1)){
+            
+            n1 = stack_pop(&stack);
+            n2 = stack_pop(&stack);
+
+            if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"var") == 0 ){  // |FLOAT FLOAT|
+                num = calc_values(n2->var.value,n1->var.value,expression);
+                stack_push(&stack,num);
+            
+            }else if(strcmp(n1->var_type,"mtx") == 0 && strcmp(n2->var_type,"var") == 0 ){ //  |MATRIX FLOAT|
+                if(strcmp(expression,"*") != 0){ printf("Incorrect type for operator '%s' - have MATRIX and FLOAT\n",expression); return NULL;}
+
+                n3 =  mult_mtx_by_factor(&n1->mtx, n2->var.value);
+                print_matrix(n3);
+                stack_push_matrix(&stack,n3);
+                
+            }else if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"mtx") == 0 ){ //  |FLOAT MATRIX|
+                if(strcmp(expression,"*") != 0) {printf("Incorrect type for operator '%s' - have  FLOAT and MATRIX\n",expression); return NULL;}
+                n3 =  mult_mtx_by_factor(&n2->mtx, n1->var.value);
+                stack_push_matrix(&stack,n3);
+
+            }else{ //|MATRIX MATRIX|
+                n3 = matrix_operations(&n1->mtx,&n2->mtx,expression);
+                if(n3 == NULL) return NULL;
+                stack_push_matrix(&stack,n3);
+            }
+            
+            free(n1);
+            free(n2);
+    
+        }else if(is_operation_or_function(expression,2)){
+                n1 = stack_pop(&stack);
+                num = calc_values(0,n1->var.value,expression);
+                stack_push(&stack,num);
+                free(n1);
+            
+        }else{
+            
+            if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
+                m1 = list_seach(list,expression);
+                stack_push_matrix(&stack, &m1->mtx);
+            }else{
+                num = atof(expression);
+                stack_push(&stack, num);
+            }
+        }
+        
+        expression = strtok(NULL," ");
+    }
+    
+    return stack; 
+}
+
 
 double calc_rpn_plot (double x,char *expression,char* var){
     
@@ -532,6 +596,17 @@ void solve_linear_system(Matrix *mtx) {
 }
 
 // ---------- Strings Operations
+char* matrix_to_string(Matrix *mtx){
+    char* mtx_str; 
+    mtx_str = (char*)malloc(sizeof(char*));
+    for(int i = 0; i < mtx->rows; i++){
+        for (int j = 0; j < mtx->cols; j++){
+            mtx_str = concat_strings(mtx_str,to_string(mtx->data[i][j]));
+        }
+        mtx_str = concat_strings(mtx_str,"|");
+    }
+    return mtx_str;
+}
 
 char* to_string(double value){ 
     // Determine the maximum size needed for the string

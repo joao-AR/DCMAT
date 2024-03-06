@@ -140,7 +140,7 @@
 
 first: 
     Quit
-    | Attr_val_simb
+    | Attr_val_simb 
     | Attr_val_matrix
         {   
 
@@ -681,11 +681,34 @@ Solve_linear_system:
 Attr_val_simb: 
     VAR ATRI Expression SEMI END_INPUT 
         {   
+            // If there is alrady a var white the same name, delete it and replace for the new one
             remove_node_list = list_remove(&list,$1);
             if(remove_node_list) free(remove_node_list);
-            void* new_var = create_var($3);
-            list_push_start(&list,"var",$1,new_var);
-            print_value($3);
+            Stack_node *value_rpn = calc_rpn_attr(exp_str,list);
+
+            if(strcmp (value_rpn->var_type,"mtx")==0 ){
+                free(mtx_str);
+                mtx_str = (char*)malloc(sizeof(char*));
+                strcpy(mtx_str,"");
+                mtx_str = matrix_to_string(&value_rpn->mtx);
+                
+                free_matrix(&mtx);
+                if(mtx_rows <= 10 && g_mtx_cols <=10){
+                    mtx = new_matrix(value_rpn->mtx.rows,value_rpn->mtx.cols);
+                    populate_matrix(&mtx, mtx_str);
+                }else{
+                    printf("Matrix limits out of boundaries.\n");
+                }
+
+                list_push_matrix_start(&list,$1,mtx_str,value_rpn->mtx.rows, value_rpn->mtx.cols);
+                print_matrix(&value_rpn->mtx);
+                free(value_rpn);
+                free(mtx_str);
+            }else{
+                void* new_var = create_var($3);
+                list_push_start(&list,"var",$1,new_var);
+                print_value($3);
+            }
             return 0;
         }
 ;
