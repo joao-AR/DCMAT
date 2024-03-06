@@ -73,7 +73,7 @@ void plot_func(char* expression){
 
             double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / 79; // 79 = 80 - 1
             double calc_val = calc_rpn_plot(x_val,exp,"x") * -1;
-            double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / 24; // 24 = 24 - 1 
+            double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / 24; // 24 = 25 - 1 
             strcpy(exp,expression);
 
             if (fabs(y_val - calc_val) < 0.2) {

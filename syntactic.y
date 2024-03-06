@@ -43,6 +43,7 @@
     char* rpn_string;
     bool is_rpn = false;
     bool is_sum = false;
+    bool have_x = false;
     char* exp_str;
     char* exp_str_last; // Used to save the last expression, plot;
     
@@ -163,16 +164,26 @@ first:
         }
     | Expression END_INPUT
         {   
-            calc_rpn_std(exp_str,list);
+            if(have_x == true){
+                printf("The x variable cannot be present on expressions.\n");
+                have_x = false;
+            }else{
+                calc_rpn_std(exp_str,list);
+            }
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
             exp_str = malloc(sizeof(char*));
             strcpy(exp_str,"");
-            return 0;
+            return 0;   
         }
     | PLUS Expression END_INPUT
         {   
-            calc_rpn_std(exp_str,list);
+            if(have_x == true){
+                printf("The x variable cannot be present on expressions.\n");
+                have_x = false;
+            }else{
+                calc_rpn_std(exp_str,list);
+            }
             strcpy(exp_str_last,exp_str);
             free(exp_str); 
             exp_str = malloc(sizeof(char*));
@@ -462,6 +473,7 @@ Expression_term:
         {
             exp_str = concat_strings(exp_str,"x");
             rpn_string = concat_strings(rpn_string,"x"); 
+            have_x = true;
         }
     | MINUS X 
         {   
@@ -705,9 +717,9 @@ Attr_val_simb:
                 free(value_rpn);
                 free(mtx_str);
             }else{
-                void* new_var = create_var($3);
+                void* new_var = create_var(value_rpn->var.value);
                 list_push_start(&list,"var",$1,new_var);
-                print_value($3);
+                print_value(value_rpn->var.value);
             }
             return 0;
         }
