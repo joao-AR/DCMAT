@@ -22,26 +22,47 @@
 
 void print_value(double num){ 
     if(precision == 0){
-        printf("%.0f\n",num);
+        printf("%.0lf\n",num);
     }else if(precision == 1){
-        printf("%.1f\n",num);
+        printf("%.1lf\n",num);
     }else if(precision == 2){
-        printf("%.2f\n",num);
+        printf("%.2lf\n",num);
     }else if(precision == 3){
-        printf("%.3f\n",num);
+        printf("%.3lf\n",num);
     }else if(precision == 4){
-        printf("%.4f\n",num);
+        printf("%.4lf\n",num);
     }else if(precision == 5){
-        printf("%.5f\n",num);
+        printf("%.5lf\n",num);
     }else if(precision == 6){
-        printf("%.6f\n",num);
+        printf("%.6lf\n",num);
     }else if(precision == 7){
-        printf("%.7f\n",num);
+        printf("%.7lf\n",num);
     }else if(precision == 8){
-        printf("%.8f\n",num);
+        printf("%.8lf\n",num);
     }
 }
 
+void print_value_mtx(double num){ 
+    if(precision == 0){
+        printf("%12.0lf ",num);
+    }else if(precision == 1){
+        printf("%12.1lf ",num);
+    }else if(precision == 2){
+        printf("%12.2lf ",num);
+    }else if(precision == 3){
+        printf("%12.3lf ",num);
+    }else if(precision == 4){
+        printf("%12.4lf ",num);
+    }else if(precision == 5){
+        printf("%12.5lf ",num);
+    }else if(precision == 6){
+        printf("%12.6lf ",num);
+    }else if(precision == 7){
+        printf("%13.7lf ",num);
+    }else if(precision == 8){
+        printf("%14.8lf ",num);
+    }
+}
 double calc_values(double n1,double n2, char* op){
     
     double result = 0;
@@ -432,21 +453,6 @@ void populate_matrix(Matrix* mtx, char* mtx_str) {
     }
 }
 
-int calc_size_matrix(const Matrix* mtx){
-    int size_matrix = 0;
-    int max_size_matrix = 0;
-    for (int l = 0; l < mtx->rows; l++) {
-        for (int m = 0; m < mtx->cols; m++) {
-            size_matrix = size_matrix + strlen(to_string(mtx->data[l][m])) + 1;
-        }
-        if(size_matrix > max_size_matrix){
-            max_size_matrix = size_matrix;
-        }
-        size_matrix = 0;
-    }
-    return max_size_matrix;
-}
-
 void print_matrix_container(int size){
     printf("+-");
     for(int i = 0; i < size -2; i++){
@@ -455,31 +461,25 @@ void print_matrix_container(int size){
     printf("-+\n");
 }
 
-void print_bar_matrix(const Matrix* mtx,int row, int max_size){
-    int spaces = 0;
-
-    for (int m = 0; m < mtx->cols; m++) {
-        spaces = spaces + strlen(to_string(mtx->data[row][m]));
-    }
-    // printf("%d - %d\n",max_size,spaces );
-    spaces = max_size -  spaces;
-    for(int i = 0; i < spaces-4; i++){
-        printf(" ");
-    }
-    printf("|\n");
-}   
-
 // Function to print the matrix
 void print_matrix(const Matrix* mtx) {
-    int size_matrix = calc_size_matrix(mtx);
+    int size_matrix = 0;
+    if(precision == 8){
+        size_matrix = mtx->cols * 15;
+    }else if(precision == 7){
+        size_matrix = mtx->cols * 14;
+    }else{
+        size_matrix = mtx->cols * 13;
+    }
     printf("\n");
     print_matrix_container(size_matrix);
-    for (int l = 0; l < mtx->rows; l++) {
-        printf("| " );
-        for (int m = 0; m < mtx->cols; m++) {
-            printf("%f ",mtx->data[l][m]);
+    for (int i = 0; i < mtx->rows; i++) {
+        printf("|");
+        for (int j = 0; j < mtx->cols; j++) {
+            print_value_mtx(mtx->data[i][j]);
         }
-        print_bar_matrix(mtx,l,size_matrix);
+        printf("|"); 
+        printf("\n");
     }
     print_matrix_container(size_matrix);
 }

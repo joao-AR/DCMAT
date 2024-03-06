@@ -1,4 +1,4 @@
 clear
 make clean
-make
-./dcmat < ./tests.txt
+make -j4
+./dcmat < ./tests/tests.txt 

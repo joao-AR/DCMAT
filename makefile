@@ -10,9 +10,9 @@ LEX = lex.l
 
 $(PROGRAM): $(LEX)
 	$(FLEX) $(LEX)
-	$(BISON) -d $(SYNTATIC)
+	$(BISON) -d $(SYNTATIC) -Wcounterexamples
 	$(CC) -c *.c -I.
-	$(CC) *.o -o $(PROGRAM) -lm
+	$(CC) *.o -o $(PROGRAM) -lm 
 
 clean:
 	rm -f lex.yy.c

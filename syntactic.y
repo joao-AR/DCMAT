@@ -153,7 +153,7 @@ first:
             }else{
                 printf("Matrix limits out of boundaries.\n");
             }
-
+            print_matrix(&list->mtx);
             // Reset 
             mtx_str = malloc(sizeof(char*));
             g_mtx_cols = 1;
@@ -195,6 +195,7 @@ first:
     | Set_View
     | Set_Axis 
     | Set_Erase_Plot
+    | Set_Connected_Dosts
     | Plot_last 
     | Plot 
     | Matrix
@@ -337,6 +338,10 @@ Set_Erase_Plot:
         }
 ;
 
+Set_Connected_Dosts:
+    SET CONNECT_DOTS ON SEMI END_INPUT{return 0;}
+    |SET CONNECT_DOTS OFF SEMI END_INPUT {return 0;}
+;
 Set_integral_steps: 
     SET INTEGRAL_STEPS INTEGER SEMI END_INPUT 
         {
@@ -736,7 +741,7 @@ Attr_val_matrix:
 
             if(mtx_columns > g_mtx_cols){
                 g_mtx_cols = mtx_columns;
-            } 
+            }
         }
     |VAR ATRI OB OB  Matrix_column CB CB SEMI END_INPUT
         {   
@@ -773,9 +778,7 @@ About:
 ;
 %%
 
-
 int main(int argc, char** argv){ 
-
     exp_str_last = malloc(sizeof(char*));
     while (1) {
         rpn_string = malloc(sizeof(char*));

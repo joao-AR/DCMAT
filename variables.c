@@ -72,21 +72,10 @@ void list_push_matrix_start(L_node **list,char* name, char* mtx_str, int rows, i
         }
         token = strtok(NULL, " ");
     }
-
+    
     node->next = (*list);
     *list = node;
     return;
-}
-
-// Function to print the matrix
-void print_matrix_var(const Matrix* mtx) {
-
-    for (int l = 0; l < mtx->rows; l++) {
-        for (int m = 0; m < mtx->cols; m++) {
-            printf("%12.8lf ", mtx->data[l][m]);
-        }
-        printf("\n");
-    }
 }
 
 void list_print_debug(L_node *node){
@@ -120,7 +109,6 @@ void list_print(L_node *node){
             printf("%s - FLOAT\n",node->var_name);
         }else{
             printf("%s - MATRIX [%d][%d]\n",node->var_name,node->mtx.rows,node->mtx.cols);
-            // print_matrix_var(&node->mtx);
         }
 
         node = node->next;
@@ -135,7 +123,7 @@ void list_print_var(L_node *node, char* name_var){
             if(strcmp(node->var_type,"var")==0 ){
                 printf("%s = %lf\n",node->var_name,node->var.value);
             }else{
-                print_matrix_var(&node->mtx);
+                print_matrix(&node->mtx);
             }
             return;
         }

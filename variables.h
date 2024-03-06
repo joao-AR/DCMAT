@@ -29,6 +29,5 @@
     L_node* list_seach(L_node* node, char* name_var);
     void list_print_debug(L_node *node);
     int is_in_list(L_node* node, char* name_var);
-    void print_matrix_var(const Matrix* mtx);
 
 #endif
