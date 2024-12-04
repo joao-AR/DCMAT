@@ -20,14 +20,15 @@
         struct list *next;
     }L_node;
 
-    void* create_var(double value);
-    void list_push_start(L_node **list, char* type_var,char* name, void* variable);
+    F_var create_var(double value);
+    void list_push_start(L_node **list, char* type_var, char* name, F_var variable);
     void list_push_matrix_start(L_node **list,char* name, char* mtx_str, int rows, int cols);
     void list_print(L_node *node);
     void list_print_var(L_node *node, char* name_var);
     L_node* list_remove(L_node **node,char* name_var);
-    L_node* list_seach(L_node* node, char* name_var);
+    L_node* list_search(L_node* node, char* name_var);
     void list_print_debug(L_node *node);
     int is_in_list(L_node* node, char* name_var);
-
+    void free_list(L_node **list);
+    void free_var(F_var* var);
 #endif

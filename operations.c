@@ -200,72 +200,125 @@ Matrix* matrix_operations(Matrix *mtx1, Matrix *mtx2, char* op){
     return result_mtx;
 }
 
-void calc_rpn_std(char *expression, L_node *list){ // Standard implementation for calc RPN
+void calc_rpn_std(char *expression, L_node *list) {
     double num;
     Stack_node *n1, *n2, *stack = NULL;
-    
-    L_node *m1,*m2;
-
+    L_node *m1;
     Matrix *n3;
     
-    expression = strtok(expression," ");
+    // Copia a expressão para não modificar a original
+    char *expression_copy = strdup(expression);
+    if (expression_copy == NULL) {
+        perror("Erro ao alocar memória para a cópia da expressão");
+        return;
+    }
 
-    while (expression){ 
-        if(is_operation_or_function(expression,1)){
-            
+    char *token = strtok(expression_copy, " ");
+
+    while (token) { 
+        if (is_operation_or_function(token, 1)) {
             n1 = stack_pop(&stack);
             n2 = stack_pop(&stack);
 
-            if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"var") == 0 ){  // |FLOAT FLOAT|
-                num = calc_values(n2->var.value,n1->var.value,expression);
-                stack_push(&stack,num);
-            
-            }else if(strcmp(n1->var_type,"mtx") == 0 && strcmp(n2->var_type,"var") == 0 ){ //  |MATRIX FLOAT|
-                if(strcmp(expression,"*") != 0){ printf("Incorrect type for operator '%s' - have MATRIX and FLOAT\n",expression); return;}
-
-                n3 =  mult_mtx_by_factor(&n1->mtx, n2->var.value);
-                print_matrix(n3);
-                stack_push_matrix(&stack,n3);
-                
-            }else if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"mtx") == 0 ){ //  |FLOAT MATRIX|
-                if(strcmp(expression,"*") != 0) {printf("Incorrect type for operator '%s' - have  FLOAT and MATRIX\n",expression); return;}
-                n3 =  mult_mtx_by_factor(&n2->mtx, n1->var.value);
-                stack_push_matrix(&stack,n3);
-
-            }else{ //|MATRIX MATRIX|
-                n3 = matrix_operations(&n1->mtx,&n2->mtx,expression);
-                if(n3 == NULL) return;
-                stack_push_matrix(&stack,n3);
+            if (!n1 || !n2) {
+                printf("Erro: Operação com operandos insuficientes\n");
+                if (n1) free(n1);
+                if (n2) free(n2);
+                free(expression_copy);
+                return;
             }
-            
+
+            if (strcmp(n1->var_type, "var") == 0 && strcmp(n2->var_type, "var") == 0) {  
+                num = calc_values(n2->var.value, n1->var.value, token);
+                stack_push(&stack, num);
+
+            } else if (strcmp(n1->var_type, "mtx") == 0 && strcmp(n2->var_type, "var") == 0) { 
+                if (strcmp(token, "*") != 0) {
+                    printf("Incorrect type for operator '%s' - have MATRIX and FLOAT\n", token);
+                    free(n1);
+                    free(n2);
+                    free(expression_copy);
+                    return;
+                }
+
+                n3 = mult_mtx_by_factor(&n1->mtx, n2->var.value);
+                stack_push_matrix(&stack, n3);
+                free_matrix(n3); // Libera a matriz alocada por mult_mtx_by_factor
+
+            } else if (strcmp(n1->var_type, "var") == 0 && strcmp(n2->var_type, "mtx") == 0) { 
+                if (strcmp(token, "*") != 0) {
+                    printf("Incorrect type for operator '%s' - have FLOAT and MATRIX\n", token);
+                    free(n1);
+                    free(n2);
+                    free(expression_copy);
+                    return;
+                }
+
+                n3 = mult_mtx_by_factor(&n2->mtx, n1->var.value);
+                stack_push_matrix(&stack, n3);
+                free_matrix(n3);
+
+            } else { // |MATRIX MATRIX|
+                n3 = matrix_operations(&n1->mtx, &n2->mtx, token);
+                if (!n3) {
+                    free(n1);
+                    free(n2);
+                    free(expression_copy);
+                    return;
+                }
+                stack_push_matrix(&stack, n3);
+                free_matrix(n3);
+            }
+
             free(n1);
             free(n2);
-    
-        }else if(is_operation_or_function(expression,2)){
-                n1 = stack_pop(&stack);
-                num = calc_values(0,n1->var.value,expression);
-                stack_push(&stack,num);
-                free(n1);
-            
-        }else{
-            
-            if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
-                m1 = list_seach(list,expression);
+
+        } else if (is_operation_or_function(token, 2)) {
+            n1 = stack_pop(&stack);
+
+            if (!n1) {
+                printf("Erro: Operação com operandos insuficientes\n");
+                free(expression_copy);
+                return;
+            }
+
+            num = calc_values(0, n1->var.value, token);
+            stack_push(&stack, num);
+            free(n1);
+
+        } else {
+            if (is_in_list(list, token) == 1) { 
+                m1 = list_search(list, token);
                 stack_push_matrix(&stack, &m1->mtx);
-            }else{
-                num = atof(expression);
+            } else {
+                num = atof(token);
                 stack_push(&stack, num);
             }
         }
-        
-        expression = strtok(NULL," ");
+
+        token = strtok(NULL, " ");
     }
 
-    if(strcmp(stack->var_type,"var")==0) print_value(stack->var.value);
-    if(strcmp(stack->var_type,"mtx")==0) print_matrix(&stack->mtx);
-    
-    return;
+    // Imprime o resultado final
+    if (stack) {
+        if (strcmp(stack->var_type, "var") == 0) {
+            print_value(stack->var.value);
+        } else if (strcmp(stack->var_type, "mtx") == 0) {
+            print_matrix(&stack->mtx);
+        }
+    }
+
+    // Libera o restante da pilha
+    while (stack) {
+        if(&stack->mtx) free_matrix(&stack->mtx);
+        n1 = stack_pop(&stack);
+        if (n1) free(n1);
+    }
+
+    // Libera a cópia da expressão
+    free(expression_copy);
 }
+
 
 Stack_node* calc_rpn_attr(char *expression, L_node *list){
     double num;
@@ -290,13 +343,13 @@ Stack_node* calc_rpn_attr(char *expression, L_node *list){
             }else if(strcmp(n1->var_type,"mtx") == 0 && strcmp(n2->var_type,"var") == 0 ){ //  |MATRIX FLOAT|
                 if(strcmp(expression,"*") != 0){ printf("Incorrect type for operator '%s' - have MATRIX and FLOAT\n",expression); return NULL;}
 
-                n3 =  mult_mtx_by_factor(&n1->mtx, n2->var.value);
+                n3 = mult_mtx_by_factor(&n1->mtx, n2->var.value);
                 print_matrix(n3);
                 stack_push_matrix(&stack,n3);
                 
             }else if(strcmp(n1->var_type,"var") == 0 && strcmp(n2->var_type,"mtx") == 0 ){ //  |FLOAT MATRIX|
                 if(strcmp(expression,"*") != 0) {printf("Incorrect type for operator '%s' - have  FLOAT and MATRIX\n",expression); return NULL;}
-                n3 =  mult_mtx_by_factor(&n2->mtx, n1->var.value);
+                n3 = mult_mtx_by_factor(&n2->mtx, n1->var.value);
                 stack_push_matrix(&stack,n3);
 
             }else{ //|MATRIX MATRIX|
@@ -317,7 +370,7 @@ Stack_node* calc_rpn_attr(char *expression, L_node *list){
         }else{
             
             if(is_in_list(list,expression) == 1){ // If is in the list it's a Matrix
-                m1 = list_seach(list,expression);
+                m1 = list_search(list,expression);
                 stack_push_matrix(&stack, &m1->mtx);
             }else{
                 num = atof(expression);
@@ -328,44 +381,74 @@ Stack_node* calc_rpn_attr(char *expression, L_node *list){
         expression = strtok(NULL," ");
     }
     
+    
     return stack; 
 }
 
 
-double calc_rpn_plot (double x,char *expression,char* var){
-    
+double calc_rpn_plot(double x, char *expression, char *var) {
     double num;
-    Stack_node *n1,*n2, *stack = NULL; 
+    Stack_node *n1, *n2, *stack = NULL;
 
-    expression = strtok(expression," ");
-    while(expression){
-        if(is_operation_or_function(expression,1)){
+    // Cria uma cópia da string para evitar modificar a original
+    char *expr_copy = strdup(expression);
+    if (expr_copy == NULL) {
+        fprintf(stderr, "Erro ao alocar memória.\n");
+        return 0;
+    }
+
+    char *token = strtok(expr_copy, " ");
+    while (token) {
+        if (is_operation_or_function(token, 1)) {
             n1 = stack_pop(&stack);
             n2 = stack_pop(&stack);
-            
-            num = calc_values(n2->var.value,n1->var.value,expression);
-            stack_push(&stack,num);
+
+            // Verifica se os elementos retirados da pilha são válidos
+            if (n1 == NULL || n2 == NULL) {
+                fprintf(stderr, "Erro: Pilha vazia ao realizar operação binária.\n");
+                free(expr_copy);
+                stack_pop_all(&stack);
+                break;
+                return 0;
+            }
+
+            num = calc_values(n2->var.value, n1->var.value, token);
+            stack_push(&stack, num);
             free(n1);
             free(n2);
 
-        }else if(is_operation_or_function(expression,2)){
+        } else if (is_operation_or_function(token, 2)) {
             n1 = stack_pop(&stack);
-            num = calc_values(0,n1->var.value,expression);
-            stack_push(&stack,num);
+
+            // Verifica se o elemento retirado da pilha é válido
+            if (n1 == NULL) {
+                fprintf(stderr, "Erro: Pilha vazia ao realizar operação unária.\n");
+                free(expr_copy);
+                stack_pop_all(&stack);
+                return 0;
+            }
+
+            num = calc_values(0, n1->var.value, token);
+            stack_push(&stack, num);
             free(n1);
 
-        }else if(strcmp(expression, var) == 0 ){
+        } else if (strcmp(token, var) == 0) {
             num = x;
-            stack_push(&stack,num);
-        }else{
-            num = atof(expression);
-            stack_push(&stack,num);
+            stack_push(&stack, num);
+
+        } else {
+            num = atof(token);
+            stack_push(&stack, num);
         }
-        expression = strtok(NULL," ");
+
+        token = strtok(NULL, " ");
     }
-    
+
+    free(expr_copy);
+    stack_pop_all(&stack); // Libera qualquer memória restante na pilha
     return num;
 }
+
 
 void riemann_sum(double inf,double sup,char *expression){
     double delta_x = (sup - inf) / integral_steps;
@@ -413,9 +496,9 @@ Matrix new_matrix(int rows, int cols) {
     mtx.rows = rows;
     mtx.cols = cols;
 
-    mtx.data = (double**) malloc(rows * sizeof(double*));
+    mtx.data = (double**)calloc(rows, sizeof(double*)); // Aloca memória para as linhas
     for(int i = 0; i < rows; i++){
-        mtx.data[i] = (double*)malloc(cols * sizeof(double));
+        mtx.data[i] = (double*)calloc(cols, sizeof(double)); // Aloca memória para as colunas
     }
 
     return mtx;
@@ -423,11 +506,22 @@ Matrix new_matrix(int rows, int cols) {
 
 // Function to free the memory allocated for a matrix
 void free_matrix(Matrix* mtx) {
+    // Verifica se o ponteiro é nulo
+    if (mtx == NULL || mtx->data == NULL) return;
+
+    // Libera cada linha da matriz
     for (int i = 0; i < mtx->rows; i++) {
-        free(mtx->data[i]);
+        if (mtx->data[i] != NULL) { // Verifica se a linha foi alocada
+            free(mtx->data[i]);
+            mtx->data[i] = NULL; // Evita ponteiros pendentes
+        }
     }
+
+    // Libera o array de ponteiros
     free(mtx->data);
     mtx->data = NULL;
+
+    // Redefine as dimensões da matriz
     mtx->rows = 0;
     mtx->cols = 0;
 }
@@ -476,7 +570,12 @@ void print_matrix(const Matrix* mtx) {
     for (int i = 0; i < mtx->rows; i++) {
         printf("|");
         for (int j = 0; j < mtx->cols; j++) {
-            print_value_mtx(mtx->data[i][j]);
+            if(!mtx->data[i][j]){
+                print_value_mtx(0.000000000);
+
+            }else{
+                print_value_mtx(mtx->data[i][j]);
+            }
         }
         printf("|"); 
         printf("\n");
@@ -528,6 +627,7 @@ double solve_determinant(Matrix mtx, int n){
         sign = -sign;
     }
 
+    free_matrix(&temp);
     return det_result;
 }
 // ---------- END Solve Determiant
@@ -596,43 +696,102 @@ void solve_linear_system(Matrix *mtx) {
 }
 
 // ---------- Strings Operations
-char* matrix_to_string(Matrix *mtx){
-    char* mtx_str; 
-    mtx_str = (char*)malloc(sizeof(char*));
-    for(int i = 0; i < mtx->rows; i++){
-        for (int j = 0; j < mtx->cols; j++){
-            mtx_str = concat_strings(mtx_str,to_string(mtx->data[i][j]));
-        }
-        mtx_str = concat_strings(mtx_str,"|");
+char* matrix_to_string(Matrix *mtx) {
+    if (mtx == NULL || mtx->data == NULL) {
+        return NULL; // Verifica se a matriz é válida
     }
+
+    // Aloca memória inicial suficiente para o buffer (tamanho arbitrário inicial)
+    size_t buffer_size = 256; 
+    char* mtx_str = (char*)malloc(buffer_size);
+    if (mtx_str == NULL) {
+        fprintf(stderr, "Erro: Falha ao alocar memória para mtx_str.\n");
+        return NULL;
+    }
+    mtx_str[0] = '\0'; // Inicializa a string vazia
+
+    for (int i = 0; i < mtx->rows; i++) {
+        for (int j = 0; j < mtx->cols; j++) {
+            // Converte o número em string
+            char* value_str = to_string(mtx->data[i][j]);
+            if (value_str == NULL) {
+                free(mtx_str);
+                return NULL;
+            }
+
+            // Concatena o valor à string
+            size_t required_size = strlen(mtx_str) + strlen(value_str) + 2; // +1 para espaço ou '|', +1 para '\0'
+            if (required_size > buffer_size) {
+                buffer_size *= 2; // Duplica o buffer
+                char* new_mtx_str = (char*)realloc(mtx_str, buffer_size);
+                if (new_mtx_str == NULL) {
+                    free(value_str);
+                    free(mtx_str);
+                    return NULL;
+                }
+                mtx_str = new_mtx_str;
+            }
+
+            strcat(mtx_str, value_str);
+            strcat(mtx_str, " "); // Adiciona espaço entre os valores
+            free(value_str);
+        }
+
+        // Adiciona o delimitador de linha '|'
+        if (i < mtx->rows - 1) {
+            size_t required_size = strlen(mtx_str) + 2; // +1 para '|', +1 para '\0'
+            if (required_size > buffer_size) {
+                buffer_size *= 2;
+                char* new_mtx_str = (char*)realloc(mtx_str, buffer_size);
+                if (new_mtx_str == NULL) {
+                    free(mtx_str);
+                    return NULL;
+                }
+                mtx_str = new_mtx_str;
+            }
+            strcat(mtx_str, "|");
+        }
+    }
+
     return mtx_str;
 }
 
+
 char* to_string(double value){ 
-    // Determine the maximum size needed for the string
-    int size = snprintf(NULL, 0, "%f", value);
+     // Calcula o tamanho necessário para armazenar a string formatada
+    int len = snprintf(NULL, 0, "%f", value);
 
-    // Allocate memory for the string
-    char* result = (char*)malloc(size + 1);  // +1 for the null terminator
+    // Aloca memória suficiente para a string (incluindo o terminador nulo)
+    char* result = (char*)malloc(len + 1);  // +1 para '\0'
+    if (result == NULL) {
+        fprintf(stderr, "Erro: Falha ao alocar memória.\n");
+        exit(1);  // Termina o programa em caso de erro
+    }
 
-    // Convert float to string
-    snprintf(result, size + 1, "%f", value);
+    // Formata o valor na string alocada
+    snprintf(result, len + 1, "%f", value);
 
-    return result;
+    return result;  // Retorna o ponteiro para a string alocada
 }
 
 char* concat_strings(const char* str1, const char* str2) {
+    // Validações
+    if (str1 == NULL) str1 = ""; // Trate str1 como string vazia se for NULL
+    if (str2 == NULL) str2 = ""; // Trate str2 como string vazia se for NULL
 
-    size_t size = strlen(str1) + strlen(str2) + 2;
+    // Calcula o tamanho necessário
+    size_t size = strlen(str1) + strlen(str2) + 2; // +2 para espaço e '\0'
 
+    // Aloca a memória para o resultado
     char* result = (char*)malloc(size);
     if (!result) {
-        // Tratamento de erro se a alocação falhar
+        perror("Erro ao alocar memória");
         exit(EXIT_FAILURE);
     }
 
+    // Copia e concatena as strings
     strcpy(result, str1);
-    strcat(result, " ");// space between str1 and str2
+    strcat(result, " "); // Adiciona espaço entre as strings
     strcat(result, str2);
 
     return result;

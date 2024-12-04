@@ -5,25 +5,27 @@
 #include "variables.h"
 #include "operations.h"
 
-void* create_var(double value){
-    F_var *new_var = malloc(sizeof(F_var));
-    new_var->value = value;
-    return new_var;
-} 
+F_var create_var(double value) {
+    F_var var;
+    var.value = value;
+    return var;
+}
 
-void list_push_start(L_node **list, char* type_var,char* name, void* variable){
-    
+void list_push_start(L_node **list, char* type_var, char* name, F_var variable) {
     if(list == NULL) return;
 
     L_node *node = (L_node*) malloc(sizeof(L_node));
     
     if(node == NULL) return ; 
     
-    F_var* var;
-    var = (F_var*) variable;
-    node->var.value = var->value;
-    node->var_name = (char*)malloc(sizeof(name));
-    strcpy(node->var_name,name);
+    node->var = variable;
+
+    node->var_name = (char*)malloc(strlen(name) + 1);
+    if (node->var_name == NULL) {
+        free(node); // Libera o nó se falhar a alocação
+        return;
+    }
+    strcpy(node->var_name, name); // Copia a string 'name' para 'node->var_name'
     strcpy(node->var_type,"var");
 
     node->next = (*list);
@@ -31,39 +33,59 @@ void list_push_start(L_node **list, char* type_var,char* name, void* variable){
     return;
 }
 
-void list_push_matrix_start(L_node **list,char* name, char* mtx_str, int rows, int cols){
-    
-    if(list == NULL) return;
+void list_push_matrix_start(L_node **list, char* name, char* mtx_str, int rows, int cols) {
+    if (list == NULL) return;
 
-    L_node *node = (L_node*) malloc(sizeof(L_node));
-    
-    if(node == NULL) return ; 
-    
+    L_node *node = (L_node*)malloc(sizeof(L_node));
+    if (node == NULL) return;
+
     node->mtx.cols = cols;
     node->mtx.rows = rows;
 
-    node->var_name = (char*)malloc(sizeof(name));
-    strcpy(node->var_name,name);
+    // Alocar e copiar o nome
+    node->var_name = (char*)malloc(strlen(name) + 1); // +1 para o terminador '\0'
+    if (node->var_name == NULL) {
+        free(node);
+        return;
+    }
+    strcpy(node->var_name, name);
 
-    strcpy(node->var_type,"mtx");
+    strcpy(node->var_type, "mtx");
 
-    //Initialize matrix
-
-    node->mtx.data = (double**) malloc(rows * sizeof(double*));
-    for(int i = 0; i < rows; i++){
-        node->mtx.data[i] = (double*)malloc(cols * sizeof(double));
+    // Inicializar a matriz
+    node->mtx.data = (double**)malloc(rows * sizeof(double*));
+    if (node->mtx.data == NULL) {
+        free(node->var_name);
+        free(node);
+        return;
     }
 
-    // Populate Matrix
-    int i = 0;
-    int j = 0;
+    for (int i = 0; i < rows; i++) {
+        node->mtx.data[i] = (double*)malloc(cols * sizeof(double));
+        if (node->mtx.data[i] == NULL) {
+            // Libera linhas previamente alocadas em caso de falha
+            for (int k = 0; k < i; k++) {
+                free(node->mtx.data[k]);
+            }
+            free(node->mtx.data);
+            free(node->var_name);
+            free(node);
+            return;
+        }
 
+        // Inicializa todos os valores da linha com 0.0
+        for (int j = 0; j < cols; j++) {
+            node->mtx.data[i][j] = 0.0;
+        }
+    }
+
+    // Preencher a matriz com os valores de mtx_str
+    int i = 0, j = 0;
     char* token = strtok(mtx_str, " ");
-
     while (token) {
         if (strcmp(token, "|") == 0) {
-            j++;
-            i = 0;
+            j++; // Avança para a próxima linha
+            i = 0; // Reinicia a contagem de colunas
         } else {
             if (j < node->mtx.rows && i < node->mtx.cols) {
                 node->mtx.data[j][i] = strtod(token, NULL);
@@ -72,10 +94,10 @@ void list_push_matrix_start(L_node **list,char* name, char* mtx_str, int rows, i
         }
         token = strtok(NULL, " ");
     }
-    
+
+    // Inserir o nó na lista
     node->next = (*list);
     *list = node;
-    return;
 }
 
 void list_print_debug(L_node *node){
@@ -163,7 +185,7 @@ L_node* list_remove(L_node** node, char* name_var) {
 }
 
 
-L_node* list_seach(L_node* node, char* name_var) {
+L_node* list_search(L_node* node, char* name_var) {
     
     if (node == NULL) {
         return NULL;  // Check for NULL pointer or empty list
@@ -180,6 +202,7 @@ L_node* list_seach(L_node* node, char* name_var) {
 }
 
 int is_in_list(L_node* node, char* name_var){
+
     // 0 = False 1 = True
     if (node == NULL) {
         return 0; 
@@ -192,4 +215,40 @@ int is_in_list(L_node* node, char* name_var){
         node = node->next;
     }
     return 0;
+}
+
+void free_list(L_node **list) {
+    if (list == NULL || *list == NULL) {
+        return; // Lista vazia ou ponteiro inválido
+    }
+
+    L_node *current = *list;
+    L_node *next;
+
+    while (current != NULL) {
+        next = current->next; // Salva o próximo nó
+
+        // Libera a memória associada ao nome da variável
+        if (current->var_name != NULL) {
+            free(current->var_name);
+        }
+
+        // Libera a memória associada à matriz, se for uma matriz
+        if (strcmp(current->var_type, "mtx") == 0) {
+            if (current->mtx.data != NULL) {
+                for (int i = 0; i < current->mtx.rows; i++) {
+                    if (current->mtx.data[i] != NULL) {
+                        free(current->mtx.data[i]); // Libera cada linha da matriz
+                    }
+                }
+                free(current->mtx.data); // Libera o array de ponteiros
+            }
+        }
+
+        // Libera o nó atual
+        free(current);
+        current = next;
+    }
+
+    *list = NULL; // Garante que o ponteiro da lista seja nulo após liberar
 }

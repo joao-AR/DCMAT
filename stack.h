@@ -14,5 +14,6 @@
     Stack_node* stack_pop(Stack_node **top);
     void stack_print(Stack_node *top);
     void stack_pop_all(Stack_node **top);
+    void free_matrix_stack(Matrix* mtx);
 
 #endif

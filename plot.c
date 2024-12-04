@@ -62,19 +62,21 @@ void plot_print(){
 }
 
 void plot_func(char* expression){
-    size_t len =  strlen(expression);
-    char *exp = (char*)malloc(len+1);
+    size_t len = strlen(expression);
+    char *exp = (char*)malloc(len + 1);
 
-    // printf("expression : [%s]\n",expression);
-    strcpy(exp,expression);
+    if (exp == NULL) {
+        fprintf(stderr, "Erro ao alocar memória.\n");
+        return;
+    }
+
+    strcpy(exp, expression);
     plot_config();
-    for(int i = 0; i < 25; i++){
-        for(int j = 0; j < 80; j++){
-
+    for (int i = 0; i < 25; i++) {
+        for (int j = 0; j < 80; j++) {
             double x_val = h_view_lo + j * (h_view_hi - h_view_lo) / 79; // 79 = 80 - 1
-            double calc_val = calc_rpn_plot(x_val,exp,"x") * -1;
+            double calc_val = calc_rpn_plot(x_val, exp, "x") * -1;
             double y_val = v_view_lo + i * (v_view_hi - v_view_lo) / 24; // 24 = 25 - 1 
-            strcpy(exp,expression);
 
             if (fabs(y_val - calc_val) < 0.2) {
                 plot[i][j] = '*';

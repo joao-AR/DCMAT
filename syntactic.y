@@ -11,6 +11,7 @@
     #include "variables.h"
     
     // From lex.l
+    extern void yylex_destroy();
 	extern char* yytext;
 	extern int yyleng;
 	extern int yychar;
@@ -144,24 +145,29 @@ first:
     | Attr_val_simb 
     | Attr_val_matrix
         {   
-
-            
             if(mtx_rows <= 10 && g_mtx_cols <=10){
                 list_push_matrix_start(&list,name_mtx_var,mtx_str,mtx_rows, g_mtx_cols);
-                free(mtx_str);
-                free(name_mtx_var);
+                
             }else{
                 printf("Matrix limits out of boundaries.\n");
             }
+
+            if(mtx_str != NULL ) free(mtx_str);
+            if(name_mtx_var != NULL ){
+                free(name_mtx_var);
+                name_mtx_var = NULL;
+            }
+                
+
             print_matrix(&list->mtx);
             // Reset 
-            mtx_str = malloc(sizeof(char*));
+            mtx_str = calloc(1,sizeof(char*));
             g_mtx_cols = 1;
             mtx_rows = 1;
             mtx_columns = 0;
 
             return 0;
-        }
+        } 
     | Expression END_INPUT
         {   
             if(have_x == true){
@@ -170,10 +176,20 @@ first:
             }else{
                 calc_rpn_std(exp_str,list);
             }
-            strcpy(exp_str_last,exp_str);
-            free(exp_str); 
-            exp_str = malloc(sizeof(char*));
+            
+            if (exp_str_last != NULL) free(exp_str_last); // Libera memória da última expressão
+            
+            exp_str_last = strdup(exp_str); // Cria cópia de exp_str
+            
+           // Libera e realoca exp_str e rpn_string
+            if (exp_str != NULL) free(exp_str);
+            if (rpn_string != NULL) free(rpn_string);
+
+            exp_str = calloc(1,sizeof(char) * 100); // Aloca espaço suficiente
+            rpn_string = calloc(1,sizeof(char) * 100); // Aloca espaço suficiente
+
             strcpy(exp_str,"");
+            strcpy(rpn_string,"");
             return 0;   
         }
     | PLUS Expression END_INPUT
@@ -184,9 +200,11 @@ first:
             }else{
                 calc_rpn_std(exp_str,list);
             }
-            strcpy(exp_str_last,exp_str);
+            if (exp_str_last != NULL) free(exp_str_last); // Libera memória da última expressão
+            
+            exp_str_last = strdup(exp_str); // Cria cópia de exp_str
             free(exp_str); 
-            exp_str = malloc(sizeof(char*));
+            exp_str = calloc(1,sizeof(char) * 100);
             strcpy(exp_str,"");
             return 0;
         }
@@ -209,20 +227,21 @@ first:
             }
             
             free(mtx_str); 
-            mtx_str = malloc(sizeof(char*));
+            mtx_str = calloc(1,sizeof(char*));
             g_mtx_cols = 1;
             mtx_rows = 1;
             mtx_columns = 0;
             return 0;
         }
     | Integrate 
-    | Inc_Sum  
+    | Inc_Sum
     | Rpn 
         {   
             free(rpn_string); 
-            rpn_string = malloc(sizeof(char*));
+            rpn_string = calloc(1,sizeof(char*));
             strcpy(rpn_string,"");
         }
+    
     | Set_integral_steps 
     | Show_matrix 
     | About 
@@ -237,7 +256,7 @@ Inc_Sum:
     {
         is_sum = true;
     } 
-    Sum
+    Sum 
 Quit: 
     QUIT 
     {   
@@ -342,6 +361,7 @@ Set_Connected_Dosts:
     SET CONNECT_DOTS ON SEMI END_INPUT{return 0;}
     |SET CONNECT_DOTS OFF SEMI END_INPUT {return 0;}
 ;
+
 Set_integral_steps: 
     SET INTEGRAL_STEPS INTEGER SEMI END_INPUT 
         {
@@ -370,73 +390,110 @@ Set_float_precision:
 Expression:
     VAR
         {   
-            L_node *var_node = list_seach(list, $1);
-            if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
-                aux_string = to_string(var_node->var.value);
-                exp_str = concat_strings(exp_str,aux_string);
+            L_node *var_node = list_search(list, $1);
+            if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAT VAR it put in a str
+                char* temp = to_string(var_node->var.value);
+                char* temp2 = concat_strings(exp_str,temp);
+                if(exp_str != NULL) free(exp_str);
+                exp_str = temp2;
+                free(temp);
                 $$ = var_node->var.value;
 
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
-                exp_str = concat_strings(exp_str,var_node->var_name);
+                char* temp = concat_strings(exp_str,var_node->var_name);
+                if(exp_str != NULL) free(exp_str);
+                exp_str = temp;
 
             }else if(is_rpn == false && is_sum == false){
                 printf("Undefined symbol [%s]\n",$1);
+                free($1);
                 return 0;
             }
 
-            if(is_sum){
-                if(var_node == NULL){
-                    exp_str = concat_strings(exp_str,$1);
-                }   
+            if(is_sum && var_node == NULL){
+                char* temp = concat_strings(exp_str,$1);
+                if(exp_str != NULL) free(exp_str);
+                exp_str = temp;
+
             }
-            rpn_string = concat_strings(rpn_string,$1); 
-        }
+            char* temp = concat_strings(rpn_string,$1);
+            if(rpn_string != NULL) free(rpn_string);
+            rpn_string = temp;
+
+            free($1);
+        } 
     |MINUS VAR 
-        {
-            L_node *var_node = list_seach(list, $2);
-            if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOAR VAR it put in a str
-                aux_string = to_string(var_node->var.value);
-                exp_str = concat_strings(exp_str,aux_string);
-                exp_str = concat_strings(exp_str,"-1 *");
+        {   
+            L_node *var_node = list_search(list, $2);
+
+            if(var_node && strcmp(var_node->var_type,"var") == 0 ){// if var is a FLOART VAR it put in a str
+                
+                char* temp = to_string(var_node->var.value);
+                char* temp2 = concat_strings(exp_str,temp);
+                char* temp3 = concat_strings(temp2,"-1 *");
+                if(exp_str != NULL) free(exp_str);
+                exp_str = temp3;
+                free(temp);
+                free(temp2);
             
             }else if(var_node && strcmp(var_node->var_type,"mtx") == 0){
-                exp_str = concat_strings(exp_str,var_node->var_name);
-                exp_str = concat_strings(exp_str,"-1 *");
+                char* temp = concat_strings(exp_str,$2);
+                char* temp2 = concat_strings(temp,"-1 *");
+                if(exp_str != NULL) free(exp_str);
+                exp_str = temp2;
+                free(temp);
 
             }else if(is_rpn == false && is_sum == false){
                 printf("Undefined symbol [%s]\n",$2);
+                free($2);
                 return 0;
             }
 
-            if(is_sum){
-                if(var_node == NULL){
-                    exp_str = concat_strings(exp_str,$2);
-                }   
+            if(is_sum && var_node == NULL){
+                char* temp = concat_strings(exp_str,$2);
+                if(exp_str != NULL) free(exp_str);
+                exp_str = temp;
             }
-            rpn_string = concat_strings(rpn_string,$2); 
-            rpn_string = concat_strings(rpn_string,$2); 
+            
+            char* temp = concat_strings(rpn_string,$2); 
+            char* temp2 = concat_strings(temp,$2); 
+            if(rpn_string != NULL) free(rpn_string);
+
+            rpn_string = temp2;
+            free(temp);
+            free($2);
         }
     |Function
-    |Expression_term
+    |Expression_term 
     |Factor 
         {   
             $$ = $1;
-            aux_string = to_string($1); 
-            exp_str = concat_strings(exp_str,aux_string);
-            rpn_string = concat_strings(rpn_string,aux_string); 
+            char *temp = to_string($1);
+            char *temp2 = concat_strings(exp_str, temp);
+            free(exp_str);
+            free(rpn_string);
+            exp_str = temp2;
+            rpn_string = strdup(temp2);
+            free(temp);
         }
     |Expression PLUS Expression 
         {   
             $$ = $1 + $3;
-            exp_str = concat_strings(exp_str,"+");
-            rpn_string = concat_strings(rpn_string,"+"); 
+            char *temp = concat_strings(exp_str,"+");
+            free(exp_str);
+            free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp);
 
         }
     |Expression MINUS Expression 
         {   
             $$ = $1 - $3;
-            exp_str = concat_strings(exp_str,"-"); 
-            rpn_string = concat_strings(rpn_string,"-"); 
+            char *temp = concat_strings(exp_str,"-");
+            free(exp_str);
+            free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp);
         }
     |Expression DIV Expression  
         {
@@ -445,27 +502,39 @@ Expression:
                 return 0;
             }else{
                 $$ = $1 / $3;
-                exp_str = concat_strings(exp_str,"/");
-                rpn_string = concat_strings(rpn_string,"/"); 
+                char *temp = concat_strings(exp_str,"/");
+                free(exp_str);
+                free(rpn_string);
+                exp_str = temp;
+                rpn_string = strdup(temp);
             }
         }
     |Expression MULT Expression 
         {   
-             $$ = $1 * $3;
-            exp_str = concat_strings(exp_str,"*"); 
-            rpn_string = concat_strings(rpn_string,"*"); 
+            $$ = $1 * $3;
+            char *temp = concat_strings(exp_str,"*");
+            free(exp_str);
+            free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp);
         }
     |Expression POW Expression 
         {   
             $$ = pow($1,$3);
-            exp_str = concat_strings(exp_str,"^"); 
-            rpn_string = concat_strings(rpn_string,"^"); 
+            char *temp = concat_strings(exp_str,"^");
+            free(exp_str);
+            free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp);
         }
     |Expression REST Expression 
         {   
             $$ = fmod($1,$3);
-            exp_str = concat_strings(exp_str,"%");
-            rpn_string = concat_strings(rpn_string,"%"); 
+            char *temp = concat_strings(exp_str,"%");
+            free(exp_str);
+            free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp);
         }
     |OP Expression CP 
         {
@@ -476,55 +545,89 @@ Expression:
 Expression_term:
     X 
         {
-            exp_str = concat_strings(exp_str,"x");
-            rpn_string = concat_strings(rpn_string,"x"); 
+            char* temp = concat_strings(exp_str,"x");
+            if(exp_str != NULL) free(exp_str);
+            exp_str = temp;
+
+            char* temp2 = concat_strings(rpn_string,"x");
+            if(rpn_string != NULL) free(rpn_string);
+            rpn_string = temp2;
+            
             have_x = true;
         }
     | MINUS X 
         {   
-            exp_str = concat_strings(exp_str,"x");
-            rpn_string = concat_strings(rpn_string,"x"); 
-             rpn_string = concat_strings(rpn_string,"-1 *"); 
-                exp_str = concat_strings(exp_str,"-1 *");
+            char* temp = concat_strings(exp_str,"x");
+            char* temp2 = concat_strings(temp,"-1 *");
+            if(exp_str != NULL) free(exp_str);
+            exp_str = temp2;
+
+            char* temp3 = concat_strings(rpn_string,"x");
+            char* temp4 = concat_strings(temp3,"-1 *"); 
+            if(rpn_string != NULL) free(rpn_string);
+            rpn_string = temp4;
+
+            free(temp);
+            free(temp3);
         }
     |PI 
         {
-            aux_string = to_string(pi);
-            exp_str = concat_strings(exp_str,aux_string);
-            rpn_string = concat_strings(rpn_string,aux_string); 
+            char* temp = to_string(pi);
+            char* temp2 = concat_strings(exp_str,temp);
+            if(exp_str != NULL) free(exp_str);
+            if(rpn_string != NULL) free(rpn_string);
+            exp_str = temp2;
+            rpn_string = strdup(temp2);
+            free(temp);
         }
     |E 
         {
-            aux_string = to_string(e);
-            exp_str = concat_strings(exp_str,aux_string);
-            rpn_string = concat_strings(rpn_string,aux_string); 
+            char* temp =  to_string(e);
+            char* temp2 = concat_strings(exp_str,temp);
+
+            if(exp_str != NULL) free(exp_str);
+            if(rpn_string != NULL) free(rpn_string);
+            exp_str = temp2;
+            rpn_string = strdup(temp2);
+            free(temp);
         }
 ;
-
 
 Function: 
     SEN OP Expression CP 
         {   
-            exp_str = concat_strings(exp_str,"SEN"); 
-            rpn_string = concat_strings(rpn_string,"SEN"); 
+            char* temp = concat_strings(exp_str,"SEN");
+            if(exp_str != NULL) free(exp_str);
+            if(rpn_string != NULL) free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp); 
         }
     
     | COS OP Expression CP 
         { 
-            exp_str = concat_strings(exp_str,"COS"); 
-            rpn_string = concat_strings(rpn_string,"COS"); 
+            char* temp = concat_strings(exp_str,"COS");
+            if(exp_str != NULL) free(exp_str);
+            if(rpn_string != NULL) free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp); 
         }
     | TAN OP Expression CP 
         {   
-            exp_str = concat_strings(exp_str,"TAN"); 
-            rpn_string = concat_strings(rpn_string,"TAN"); 
+            char* temp = concat_strings(exp_str,"TAN");
+            if(exp_str != NULL) free(exp_str);
+            if(rpn_string != NULL) free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp); 
         }
     | ABS OP Expression CP 
         {
-            exp_str = concat_strings(exp_str,"ABS"); 
-            rpn_string = concat_strings(rpn_string,"ABS"); 
+            char* temp = concat_strings(exp_str,"ABS");
+            if(exp_str != NULL) free(exp_str);
+            if(rpn_string != NULL) free(rpn_string);
+            exp_str = temp;
+            rpn_string = strdup(temp); 
         } 
-;
+; 
 
 Factor: 
     INTEGER 
@@ -546,7 +649,7 @@ Plot_last:
             }
             return 0;
         }
-;
+; 
 
 Plot: 
     PLOT OP Expression CP SEMI END_INPUT
@@ -554,7 +657,7 @@ Plot:
             plot_func(exp_str);
             return 0;
         } 
-;
+; 
 //------------- END PLOT
 
 
@@ -571,7 +674,7 @@ Rpn:
         is_rpn = false;
         return 0;
     }
-;
+; 
 
 //------------- END RPN
 
@@ -587,11 +690,13 @@ Integrate:
         }
 ; 
 
+
 Sum:
     SUM OP VAR COMMA INTEGER INTERVAL INTEGER COMMA Expression CP SEMI END_INPUT
         {   
             sum($3,$5,$7,exp_str);
             is_sum = false;
+            free($3);
             return 0;
         }
 ; 
@@ -615,15 +720,24 @@ Matrix:
 ;
 
 Matrix_line: 
-    { mtx_str = concat_strings(mtx_str, "|");   }
+    { 
+        char* temp = concat_strings(mtx_str, "|");  
+        if(mtx_str != NULL) free(mtx_str);
+        mtx_str = temp;
+
+    }
     COMMA OB Matrix_column CB 
         {   
-            mtx_str = concat_strings(mtx_str, "|");
+            char* temp = concat_strings(mtx_str, "|");
+            if(mtx_str != NULL) free(mtx_str);
+            mtx_str = temp;
             mtx_rows++;
         }
     | Matrix_line COMMA OB  Matrix_column CB 
         {   
-            mtx_str = concat_strings(mtx_str, "|");
+            char* temp = concat_strings(mtx_str, "|");
+            if(mtx_str != NULL) free(mtx_str);
+            mtx_str = temp;
             mtx_rows++;
         }
 ;
@@ -641,20 +755,29 @@ Matrix_column:
 Matrix_value:
     COMMA Factor 
         {      
-            aux_string = to_string($2);
-            mtx_str = concat_strings(mtx_str, aux_string);
+            char* temp = to_string($2);
+            char* temp2 = concat_strings(mtx_str, temp);
+            if(mtx_str != NULL) free(mtx_str);
+            mtx_str = temp2;
+            free(temp);
             mtx_columns++;
         }
     | Matrix_value COMMA Factor 
         {   
-            aux_string = to_string($3);
-            mtx_str = concat_strings(mtx_str, aux_string);
+            char* temp = to_string($3);
+            char* temp2 = concat_strings(mtx_str, temp);
+            if(mtx_str != NULL) free(mtx_str);
+            mtx_str = temp2;
+            free(temp);
             mtx_columns++;
         }
     | Factor
     {
-        aux_string = to_string($1);
-        mtx_str = concat_strings(mtx_str, aux_string);
+        char* temp = to_string($1);
+        char* temp2 = concat_strings(mtx_str, temp);
+        if(mtx_str != NULL) free(mtx_str);
+        mtx_str = temp2;
+        free(temp);
         mtx_columns++;
     }
 ;
@@ -671,6 +794,7 @@ Show_matrix: SHOW MATRIX SEMI END_INPUT
     }
 ;
 
+
 Solve_determinant: 
     SOLVE DETERMINANT SEMI END_INPUT 
     {   
@@ -678,7 +802,6 @@ Solve_determinant:
             printf("No Matrix Defined!\n");
         }else{
             printf("\n");
-            
             det_res = solve_determinant(mtx, mtx.rows);
             print_value(det_res);
 
@@ -686,6 +809,7 @@ Solve_determinant:
         return 0;
     }
 ;
+
 
 Solve_linear_system: 
     SOLVE LINEAR_SYSTEM SEMI END_INPUT 
@@ -698,18 +822,22 @@ Solve_linear_system:
 Attr_val_simb: 
     VAR ATRI Expression SEMI END_INPUT 
         {   
-            // If there is alrady a var white the same name, delete it and replace for the new one
+            // If there is alrady a var with the same name, delete it and replace for the new one
             remove_node_list = list_remove(&list,$1);
-            if(remove_node_list) free(remove_node_list);
-            Stack_node *value_rpn = calc_rpn_attr(exp_str,list);
-
-            if(strcmp (value_rpn->var_type,"mtx")==0 ){
-                free(mtx_str);
-                mtx_str = (char*)malloc(sizeof(char*));
-                strcpy(mtx_str,"");
-                mtx_str = matrix_to_string(&value_rpn->mtx);
+            if(remove_node_list){
+                free(remove_node_list->var_name);
+                free(remove_node_list);
+            } 
                 
-                free_matrix(&mtx);
+            Stack_node *value_rpn = calc_rpn_attr(exp_str,list);
+            
+            if(strcmp (value_rpn->var_type,"mtx")==0 ){
+                char* temp = matrix_to_string(&value_rpn->mtx);
+                if(mtx_str) free(mtx_str);
+                mtx_str = temp;
+
+                if(&mtx) free_matrix(&mtx);
+
                 if(mtx_rows <= 10 && g_mtx_cols <=10){
                     mtx = new_matrix(value_rpn->mtx.rows,value_rpn->mtx.cols);
                     populate_matrix(&mtx, mtx_str);
@@ -719,13 +847,15 @@ Attr_val_simb:
 
                 list_push_matrix_start(&list,$1,mtx_str,value_rpn->mtx.rows, value_rpn->mtx.cols);
                 print_matrix(&value_rpn->mtx);
-                free(value_rpn);
+                // free(value_rpn);
                 free(mtx_str);
             }else{
-                void* new_var = create_var(value_rpn->var.value);
+                F_var new_var = create_var(value_rpn->var.value);
                 list_push_start(&list,"var",$1,new_var);
                 print_value(value_rpn->var.value);
             }
+            stack_pop_all(&value_rpn);
+            free($1);
             return 0;
         }
 ;
@@ -733,7 +863,10 @@ Attr_val_simb:
 Attr_val_matrix: 
     VAR ATRI OB OB  Matrix_column CB Matrix_line CB SEMI END_INPUT
         {   
-            name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
+            
+            if(name_mtx_var != NULL) free(name_mtx_var);
+
+            name_mtx_var = calloc(1,strlen($1) + 1); // Aloca memória suficiente para a string + '\0'
             strcpy(name_mtx_var,$1);
 
             remove_node_list = list_remove(&list,name_mtx_var);
@@ -742,14 +875,17 @@ Attr_val_matrix:
             if(mtx_columns > g_mtx_cols){
                 g_mtx_cols = mtx_columns;
             }
+
+            free($1);
         }
     |VAR ATRI OB OB  Matrix_column CB CB SEMI END_INPUT
         {   
-            name_mtx_var = (char*)malloc(sizeof(strlen($1)+1));
+            name_mtx_var = (char*)calloc(1,sizeof(strlen($1)+1));
             strcpy(name_mtx_var,$1);
             if(mtx_columns > g_mtx_cols){
                 g_mtx_cols = mtx_columns;
             } 
+            free($1);
         }
 ;
 
@@ -757,6 +893,7 @@ Show_var:
     VAR SEMI END_INPUT 
         {   
             list_print_var(list,$1);
+            free($1);
             return 0;
         }
 ;
@@ -779,13 +916,8 @@ About:
 %%
 
 int main(int argc, char** argv){ 
-    exp_str_last = malloc(sizeof(char*));
+    exp_str_last = calloc(1,sizeof(char) * 100);
     while (1) {
-        rpn_string = malloc(sizeof(char*));
-        strcpy(rpn_string,"");
-        exp_str = malloc(sizeof(char*));
-        strcpy(exp_str,"");
-        mtx_str = malloc(sizeof(char*));
         printf("> ");
         yyparse();
     } 
@@ -797,11 +929,13 @@ void free_all(){
     free(rpn_string);
     free(exp_str);
     free(exp_str_last);
-    free(mtx_str);
+    if(!mtx_str) free(mtx_str);
     free_matrix(&mtx);
-    free(name_mtx_var);
-    free_matrix(&mtx_var);
-    free(remove_node_list);
+    if (name_mtx_var != NULL) free(name_mtx_var);
+    free_matrix(&mtx_var); 
+    if (!remove_node_list) free(remove_node_list); 
+    free_list(&list);
+    yylex_destroy();
 }
 
 void yyerror(char const *s){

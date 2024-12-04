@@ -30,6 +30,7 @@ plot(sen(x+(2*pi)/2));
 set erase plot on;
 show settings;
 
+chuchu := 10;
 rpn(sen(x) * (1+x) + chuchu * pi);
 sen(x) * (1+x) + chuchu * pi
 
@@ -53,6 +54,8 @@ about;
 minha_variavel := 123456;
 minha_variavel := 666;
 a := 222;
+c := 3;
+d := 4;
 b := 3*a;
 b := a + b + c + d;
 
